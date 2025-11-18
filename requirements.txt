@@ -1,0 +1,74 @@
+# ============================================================================
+# Python Dependencies
+# ============================================================================
+# Data Engineering Stack: BigQuery + dbt + Python
+# Last Updated: 2025-11-17
+# Version: 1.0.0
+# ============================================================================
+
+# Google Cloud Platform
+google-cloud-bigquery==3.14.1
+google-cloud-storage==2.14.0
+google-cloud-secret-manager==2.17.0
+google-auth==2.25.2
+db-dtypes==1.1.1  # BigQuery data types for pandas
+
+# dbt (data build tool) for BigQuery
+dbt-core==1.8.5
+dbt-bigquery==1.8.3
+
+# Data manipulation and analysis
+pandas==2.1.4
+numpy==1.26.2
+pyarrow==14.0.1  # Fast columnar processing
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0  # Mocking helpers
+pytest-xdist==3.5.0  # Parallel test execution
+pytest-timeout==2.2.0  # Test timeout
+coverage[toml]==7.4.0  # Coverage reporting
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.18.0
+
+# Dashboard
+streamlit==1.30.0  # Updated for better compatibility
+streamlit-aggrid==0.3.4  # Enhanced dataframe display
+
+# Jupyter notebooks
+jupyter==1.0.0
+ipykernel==6.27.1
+notebook==7.0.6
+
+# Environment and configuration
+python-dotenv==1.0.0
+
+# Data export
+openpyxl==3.1.2  # Excel export
+
+# Logging and monitoring
+structlog==23.2.0
+
+# API interactions
+requests==2.31.0
+
+# Code quality
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1
+isort==5.13.2  # Import sorting
+bandit==1.7.6  # Security linting
+safety==3.0.1  # Updated for compatibility with packaging>=22.0
+pre-commit==3.6.0
+
+# Type stubs
+types-requests==2.31.0.10
+pandas-stubs==2.1.4.231227
+
+# Kaggle
+kaggle==1.7.4.5 
+tqdm==4.67.1

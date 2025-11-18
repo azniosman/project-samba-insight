@@ -1,0 +1,105 @@
+# ============================================================================
+# Docker ignore file - Excludes files from Docker build context
+# ============================================================================
+# Last Updated: 2025-11-17
+# Version: 1.0.0
+# ============================================================================
+
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+*.env
+.env.*
+
+# Data files
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.h5
+*.db
+*.sqlite
+*.sqlite3
+*.zip
+data/
+datasets/
+exports/
+
+# Notebooks
+notebooks/
+*.ipynb
+.ipynb_checkpoints/
+
+# Documentation
+*.md
+docs/
+
+# SQL scripts (not needed in container)
+sql/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# dbt
+target/
+dbt_packages/
+dbt_modules/
+logs/
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.mypy_cache/
+
+# Python modules not needed
+python/
+
+# Airflow
+airflow/

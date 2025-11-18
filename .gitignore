@@ -1,0 +1,121 @@
+# ============================================================================
+# Gitignore
+# ============================================================================
+# Last Updated: 2025-11-17
+# Version: 1.0.0
+# ============================================================================
+
+# ----------------------
+# uv / virtual envs
+# ----------------------
+.venv/
+venv/
+
+# uv lock files (optional to ignore)
+uv.lock
+
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+
+# ----------------------
+# Jupyter Notebooks
+# ----------------------
+.ipynb_checkpoints/
+.jupyter/
+.env
+
+# VSCode settings
+.vscode/
+
+# ----------------------
+# Environment / Secrets
+# ----------------------
+.env
+*.env
+*.env.*
+
+# Exception: keep template files
+!.env.example
+
+# dotenv
+.envrc
+
+# ----------------------
+# Logs
+# ----------------------
+*.log
+logs/
+debug.log
+
+# ----------------------
+# Data files
+# ----------------------
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.h5
+*.db
+*.sqlite
+*.sqlite3
+*.zip
+
+# Large exports
+exports/
+data/
+datasets/
+
+# ----------------------
+# OS-specific
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# dbt generated files
+# ----------------------
+target/
+dbt_packages/
+dbt_modules/
+
+# ----------------------
+# Jupyter / IPython
+# ----------------------
+profile_default/
+ipython_config.py
+
+# ----------------------
+# Cache
+# ----------------------
+.cache/
+.mypy_cache/
+.pytest_cache/
+.__pycache__/
+
+# ----------------------
+# Terraform
+# ----------------------
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
