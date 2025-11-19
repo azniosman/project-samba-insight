@@ -56,6 +56,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
             pytest tests/unit/ --cov=src --cov-report=xml -x
