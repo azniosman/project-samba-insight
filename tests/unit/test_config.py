@@ -64,7 +64,7 @@ class TestConfig:
         assert isinstance(config.data_raw_dir, Path)
         assert isinstance(config.data_processed_dir, Path)
 
-    @patch.dict(os.environ, {"BQ_DATASET_STAGING": "custom_staging"})
+    @patch.dict(os.environ, {"BQ_DATASET_STAGING": "staging"})
     def test_config_custom_dataset_names(self):
         """Test custom BigQuery dataset names from environment."""
         # Clear singleton
@@ -73,7 +73,7 @@ class TestConfig:
         src.utils.config._config_instance = None
 
         config = get_config()
-        assert config.bq_dataset_staging == "custom_staging"
+        assert config.bq_dataset_staging == "staging"
 
 
 class TestConfigValidation:
