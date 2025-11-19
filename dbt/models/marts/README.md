@@ -11,12 +11,14 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ### Sales Analytics
 
 #### `mart_sales_daily`
+
 - **Grain:** One row per day, product category, and customer state
 - **Purpose:** Daily sales metrics for operational dashboards
 - **Materialization:** Table (partitioned by date)
 - **Refresh:** Daily at 3 AM (after warehouse build)
 
 **Key Metrics:**
+
 - Total orders and revenue
 - Average order value
 - Delivery performance
@@ -25,6 +27,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 - Data quality indicators
 
 **Use Cases:**
+
 - Daily sales monitoring dashboards
 - Operational performance tracking
 - Category and geography analysis
@@ -32,12 +35,14 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ---
 
 #### `mart_sales_monthly`
+
 - **Grain:** One row per month, product category, and customer state
 - **Purpose:** Monthly trends and growth analysis
 - **Materialization:** Table
 - **Refresh:** Daily (aggregates from daily mart)
 
 **Key Metrics:**
+
 - Monthly revenue and orders
 - Month-over-month growth
 - Year-over-year comparisons
@@ -45,6 +50,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 - Delivery and review trends
 
 **Use Cases:**
+
 - Executive dashboards
 - Business reviews
 - Trend analysis
@@ -55,12 +61,14 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ### Customer Analytics
 
 #### `mart_customer_cohorts`
+
 - **Grain:** One row per cohort month and customer state
 - **Purpose:** Customer cohort analysis and lifetime value
 - **Materialization:** Table
 - **Refresh:** Daily
 
 **Key Metrics:**
+
 - Cohort size and composition
 - Customer lifetime value (LTV)
 - Segment distribution (loyal/repeat/one-time)
@@ -68,6 +76,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 - Delivery and review performance by cohort
 
 **Use Cases:**
+
 - Customer acquisition analysis
 - LTV calculations
 - Cohort comparison
@@ -76,12 +85,14 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ---
 
 #### `mart_customer_retention`
+
 - **Grain:** One row per cohort month, activity month, and customer state
 - **Purpose:** Retention rate tracking and churn analysis
 - **Materialization:** Table
 - **Refresh:** Daily
 
 **Key Metrics:**
+
 - Retention rates by month
 - Month-over-month retention
 - Cumulative revenue per cohort
@@ -89,6 +100,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 - Churn indicators
 
 **Use Cases:**
+
 - Retention dashboards
 - Churn prediction
 - Customer lifecycle analysis
@@ -99,12 +111,14 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ### Product Analytics
 
 #### `mart_product_performance`
+
 - **Grain:** One row per product and month
 - **Purpose:** Product sales performance and rankings
 - **Materialization:** Table
 - **Refresh:** Daily
 
 **Key Metrics:**
+
 - Revenue and order volume
 - Product rankings (overall and by category)
 - Month-over-month growth
@@ -113,6 +127,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 - Freight costs
 
 **Use Cases:**
+
 - Product analytics dashboards
 - Inventory planning
 - Category management
@@ -153,6 +168,7 @@ Marts are pre-aggregated tables that combine data from multiple warehouse models
 ## Query Performance
 
 ### Before Marts (Direct Warehouse Query)
+
 ```sql
 -- Complex joins across multiple tables
 -- 5-10 second execution time
@@ -174,6 +190,7 @@ GROUP BY 1, 2, 3;
 ```
 
 ### After Marts (Pre-aggregated)
+
 ```sql
 -- Simple SELECT from mart
 -- <1 second execution time
@@ -197,15 +214,18 @@ WHERE month_date >= '2017-01-01';
 ## Maintenance
 
 ### Refresh Strategy
+
 - **Daily Marts:** Rebuild completely each day (small tables)
 - **Incremental Option:** Can be converted to incremental if size grows
 
 ### Data Quality
+
 - All marts have comprehensive tests in `schema.yml`
 - Tests run after each mart build
 - Alerts on test failures
 
 ### Monitoring
+
 ```bash
 # Check mart freshness
 dbt source freshness --select marts_only
@@ -222,6 +242,7 @@ dbt run --select mart_sales_daily
 ## Usage Examples
 
 ### Streamlit Dashboard
+
 ```python
 # Fast query for dashboard
 query = """
@@ -239,6 +260,7 @@ df = client.query(query).to_dataframe()
 ```
 
 ### Cohort Analysis
+
 ```python
 # Customer retention curve
 query = """
@@ -255,6 +277,7 @@ df = client.query(query).to_dataframe()
 ```
 
 ### Product Rankings
+
 ```python
 # Top products by category
 query = """
@@ -279,23 +302,27 @@ df = client.query(query).to_dataframe()
 ### When to Create a Mart
 
 ✅ **Do create a mart when:**
+
 - The same aggregation is queried repeatedly
 - Dashboard queries are slow (>3 seconds)
 - Complex joins are needed across multiple tables
 - You need month-over-month or year-over-year calculations
 
 ❌ **Don't create a mart when:**
+
 - The query is rarely used
 - The aggregation is simple (single table)
 - Data needs to be real-time (marts are daily)
 - The underlying data changes frequently
 
 ### Naming Conventions
+
 - Prefix: `mart_`
 - Category: `sales_`, `customer_`, `product_`
 - Grain: `_daily`, `_monthly`, `_weekly`
 
 Examples:
+
 - `mart_sales_daily`
 - `mart_customer_cohorts`
 - `mart_product_performance`
@@ -323,9 +350,10 @@ To add a new mart:
 
 ---
 
-## Support
+## Troubleshooting
 
-For questions or issues:
+For issue troubleshooting:
+
 - Check dbt logs: `dbt run --select marts_only --debug`
 - Review test results: `dbt test --select marts_only`
 - See main README: `/dbt/README.md`
