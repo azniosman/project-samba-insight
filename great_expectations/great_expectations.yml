@@ -1,95 +1,77 @@
-# Great Expectations Configuration
-# Documentation: https://docs.greatexpectations.io/
+# Welcome to Great Expectations! Always know what to expect from your data.
+#
+# Here you can define datasources, batch kwargs generators, integrations and
+# more. This file is intended to be committed to your repo. For help with
+# configuration please:
+#   - Read our docs: https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview/#2-configure-your-datasource
+#   - Join our slack channel: http://greatexpectations.io/slack
 
-config_version: 3.0
+# config_version refers to the syntactic version of this config file, and is used in maintaining backwards compatibility
+# It is auto-generated and usually does not need to be changed.
+config_version: 4.0
 
-datasources:
-  bigquery_warehouse:
-    class_name: Datasource
-    execution_engine:
-      class_name: SqlAlchemyExecutionEngine
-      connection_string: bigquery://project-samba-insight/dev_warehouse_warehouse
-      credentials:
-        type: service_account
-        project_id: project-samba-insight
-        # Uses GOOGLE_APPLICATION_CREDENTIALS environment variable
+# This config file supports variable substitution which enables: 1) keeping
+# secrets out of source control & 2) environment-based configuration changes
+# such as staging vs prod.
+#
+# When GX encounters substitution syntax (like `my_key: ${my_value}` or
+# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
+# to replace the value of `my_key` with the value from an environment
+# variable `my_value` or a corresponding key read from this config file,
+# which is defined through the `config_variables_file_path`.
+# Environment variables take precedence over variables defined here.
+#
+# Substitution values defined here can be a simple (non-nested) value,
+# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
+#
+#
+# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
 
-    data_connectors:
-      default_runtime_data_connector:
-        class_name: RuntimeDataConnector
-        batch_identifiers:
-          - default_identifier_name
-
-      warehouse_data_connector:
-        class_name: ConfiguredAssetSqlDataConnector
-        assets:
-          fact_orders:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: fact_orders
-
-          dim_customer:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: dim_customer
-
-          dim_product:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: dim_product
-
-          dim_seller:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: dim_seller
-
-          dim_date:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: dim_date
-
-          mart_sales_daily:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: mart_sales_daily
-
-          mart_customer_cohorts:
-            class_name: Asset
-            schema_name: dev_warehouse_warehouse
-            table_name: mart_customer_cohorts
 
 config_variables_file_path: uncommitted/config_variables.yml
 
+# The plugins_directory will be added to your python path for custom modules
+# used to override and extend Great Expectations.
 plugins_directory: plugins/
 
 stores:
+# Stores are configurable places to store things like Expectations, Validations
+# Data Docs, and more. These are for advanced users only - most users can simply
+# leave this section alone.
   expectations_store:
     class_name: ExpectationsStore
     store_backend:
       class_name: TupleFilesystemStoreBackend
       base_directory: expectations/
 
-  validations_store:
-    class_name: ValidationsStore
+  validation_results_store:
+    class_name: ValidationResultsStore
     store_backend:
       class_name: TupleFilesystemStoreBackend
       base_directory: uncommitted/validations/
-
-  evaluation_parameter_store:
-    class_name: EvaluationParameterStore
 
   checkpoint_store:
     class_name: CheckpointStore
     store_backend:
       class_name: TupleFilesystemStoreBackend
+      suppress_store_backend_id: true
       base_directory: checkpoints/
 
+  validation_definition_store:
+    class_name: ValidationDefinitionStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: validation_definitions/
+
 expectations_store_name: expectations_store
-validations_store_name: validations_store
-evaluation_parameter_store_name: evaluation_parameter_store
+validation_results_store_name: validation_results_store
 checkpoint_store_name: checkpoint_store
 
 data_docs_sites:
+  # Data Docs make it simple to visualize data quality in your project. These
+  # include Expectations, Validations & Profiles. The are built for all
+  # Datasources from JSON artifacts in the local repo including validations &
+  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
   local_site:
     class_name: SiteBuilder
     show_how_to_buttons: true
@@ -98,7 +80,23 @@ data_docs_sites:
       base_directory: uncommitted/data_docs/local_site/
     site_index_builder:
       class_name: DefaultSiteIndexBuilder
-
-anonymous_usage_statistics:
-  enabled: false
-  data_context_id: samba-insight-project
+fluent_datasources:
+  bigquery_warehouse:
+    type: sql
+    id: db8722ef-ee97-4b74-808d-5c8a207f0a8b
+    assets:
+      fact_orders:
+        type: table
+        id: 7132a2db-06d9-4d83-bf80-9b2ca487fea3
+        batch_metadata: {}
+        table_name: fact_orders
+        schema_name: dev_warehouse_warehouse
+      mart_sales_daily:
+        type: table
+        id: 8659f3fe-2a5e-4fdd-85d6-2addab0b471c
+        batch_metadata: {}
+        table_name: mart_sales_daily
+        schema_name: dev_warehouse_warehouse
+    connection_string: bigquery://project-samba-insight/dev_warehouse_warehouse
+analytics_enabled:
+data_context_id: c77292dc-c939-4e42-992d-f930da589e84

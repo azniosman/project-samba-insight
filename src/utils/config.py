@@ -43,9 +43,17 @@ class Config:
         self.environment = os.getenv("ENVIRONMENT", "dev")
 
         # BigQuery Dataset Names
-        self.bq_dataset_staging = os.getenv("BQ_DATASET_STAGING", "staging")
-        self.bq_dataset_warehouse = os.getenv("BQ_DATASET_WAREHOUSE", "warehouse")
-        self.bq_dataset_marts = os.getenv("BQ_DATASET_MARTS", "marts")
+        # Raw data staging (no environment prefix - used by ingestion scripts)
+        self.bq_dataset_raw_staging = os.getenv("BQ_DATASET_STAGING", "staging")
+
+        # dbt datasets (with environment prefix - used by dbt and notebooks)
+        # Pattern: {environment}_warehouse_{schema}
+        base_dataset = f"{self.environment}_warehouse"
+        self.bq_dataset_staging = os.getenv("BQ_DATASET_STAGING_DBT", f"{base_dataset}_staging")
+        self.bq_dataset_warehouse = os.getenv("BQ_DATASET_WAREHOUSE", f"{base_dataset}_warehouse")
+        self.bq_dataset_marts = os.getenv(
+            "BQ_DATASET_MARTS", f"{base_dataset}_warehouse"
+        )  # Marts use warehouse schema
 
         # Logging
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -112,7 +120,9 @@ class Config:
         """String representation of configuration (hides sensitive data)."""
         return (
             f"Config("
+            f"environment='{self.environment}', "
             f"gcp_project_id='{self.gcp_project_id}', "
+            f"bq_dataset_raw_staging='{self.bq_dataset_raw_staging}', "
             f"bq_dataset_staging='{self.bq_dataset_staging}', "
             f"bq_dataset_warehouse='{self.bq_dataset_warehouse}', "
             f"bq_dataset_marts='{self.bq_dataset_marts}', "

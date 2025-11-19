@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project builds a complete date pipeline and analytics ecosystem using the Braazilian E-Commerce dataset. It demonstrates best practices in data ingestion, transformation, quality assurance, warehousing and business intelligence powered by modern tools such as **Python**, **BigQuery**, **dbt**, **Great Expectations**, **Looker** and **Looker Studio**.
+This project builds a complete data pipeline and analytics ecosystem using the Braazilian E-Commerce dataset. It demonstrates best practices in data ingestion, transformation, quality assurance, warehousing and business intelligence powered by modern tools such as **Python**, **BigQuery**, **dbt**, **Great Expectations**, **Looker** and **Looker Studio**.
 
 Ther result is a scalable, transparent and well governed data platform that enables analysts, data scientists and business stakeholders to extract reliable insights about customer behaviour, sales performance, logistics efficiency and marketplace operations.
 
