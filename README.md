@@ -1979,14 +1979,4 @@ gcloud run deploy samba-insight-dashboard \
 3. **Customer Analytics Dashboard** - RFM segmentation, LTV, retention
 4. **Data Quality Dashboard** - Pipeline health, test results, freshness
 
-**BigQuery Connection:**
-
-```
-Data Source: BigQuery
-Project: project-samba-insight
-Dataset: warehouse
-Tables: fact_orders, dim_customer, mart_sales_daily, mart_sales_monthly
-Refresh: Every 30 minutes (automatic)
-```
-
 ---
