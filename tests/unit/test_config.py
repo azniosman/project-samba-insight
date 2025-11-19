@@ -29,7 +29,7 @@ class TestConfig:
 
         assert config1 is config2
 
-    @patch.dict(os.environ, {"GCP_PROJECT_ID": "test-project-123"})
+    @patch.dict(os.environ, {"GCP_PROJECT_ID": "project-samba-insight"})
     def test_config_loads_from_environment(self):
         """Test that Config loads values from environment variables."""
         # Clear singleton
@@ -38,7 +38,7 @@ class TestConfig:
         src.utils.config._config_instance = None
 
         config = get_config()
-        assert config.gcp_project_id == "test-project-123"
+        assert config.gcp_project_id == "project-samba-insight"
 
     def test_config_has_required_attributes(self):
         """Test that Config has all required attributes."""
