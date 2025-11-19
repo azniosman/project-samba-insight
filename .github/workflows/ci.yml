@@ -57,6 +57,10 @@ jobs:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DATASET_RAW: test_raw
+          GCP_DATASET_STAGING: test_staging
+          GCP_DATASET_WAREHOUSE: test_warehouse
+          GCS_BUCKET_NAME: test-bucket
         run: |
           if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
             pytest tests/unit/ --cov=src --cov-report=xml -x
