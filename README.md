@@ -1975,3 +1975,7 @@ gcloud run deploy samba-insight-dashboard \
 4. **Data Quality Dashboard** - Pipeline health, test results, freshness
 
 ---
+
+### Presentation and Reports
+
+1. [Executive Summary](EXECUTIVE_SUMMARY.md)
