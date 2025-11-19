@@ -31,8 +31,8 @@ class Config:
         if env_file.exists():
             load_dotenv(env_file)
 
-        # GCP Configuration
-        self.gcp_project_id = self._get_required("GCP_PROJECT_ID")
+        # GCP Configuration (optional - only required for BigQuery operations)
+        self.gcp_project_id = os.getenv("GCP_PROJECT_ID")
         self.google_application_credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
         # Kaggle Configuration
