@@ -101,6 +101,9 @@ module = [
     "dotenv.*",
     "great_expectations.*",
     "structlog.*",
+    "matplotlib.*",
+    "numpy.*",
+    "seaborn.*",
 ]
 ignore_missing_imports = true
 

@@ -4,7 +4,7 @@ sources:
   - name: raw
     description: Raw Brazilian E-Commerce data from Kaggle, loaded to BigQuery staging
     database: project-samba-insight
-    schema: staging
+    schema: dev_warehouse_staging
 
     # Data freshness configuration
     # Warn if data is older than 24 hours, error if older than 48 hours
