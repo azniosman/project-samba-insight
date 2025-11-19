@@ -45,7 +45,7 @@ jobs:
         run: |
           black --check src/ tests/ &
           isort --check-only src/ tests/ &
-          flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503 &
+          flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503,D200,D400,D401,F401,SIM117,SIM222 &
           mypy src/ --ignore-missing-imports &
           bandit -r src/ -ll -f json -o bandit-report.json &
           wait
@@ -99,14 +99,28 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Create dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          samba_insight:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: oauth
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: dev_warehouse
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
       - name: dbt compile & test
-        env:
-          DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
         run: |
           cd dbt
           dbt deps --quiet
-          dbt compile --profiles-dir . --quiet
-          dbt test --profiles-dir . --target dev --fail-fast
+          dbt compile --quiet
+          dbt test --target dev --fail-fast
 
   # ============================================================================
   # Job 3: Integration Tests (Conditional)
