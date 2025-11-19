@@ -69,7 +69,7 @@ Cloud-native batch ingestion with idempotency, error handling, and metadata trac
 
 ```
 src/ingestion/
-├── kaggle_downloader.py    # Automated dataset download from Kaggle
+├── kaggle_downloader.py     # Automated dataset download from Kaggle
 ├── gcs_uploader.py          # Upload raw data to Google Cloud Storage
 └── bigquery_loader.py       # Load to BigQuery with MD5-based idempotency
 ```
@@ -82,14 +82,14 @@ src/ingestion/
 - **Dataset Source:** Kaggle `olistbr/brazilian-ecommerce` (Brazilian E-Commerce Public Dataset)
 - **Error Handling:** Comprehensive logging with structured logs (JSON format)
 
-**Usage Example:**
+**Dataset Preparation:**
 
 ```bash
 # Step 1: Download from Kaggle
 python src/ingestion/kaggle_downloader.py --dataset olistbr/brazilian-ecommerce
 
 # Step 2: Upload to GCS
-python src/ingestion/gcs_uploader.py --upload-kaggle-data
+python src/ingestion/gcs_uploader.py --kaggle
 
 # Step 3: Load to BigQuery (idempotent - safe to run multiple times)
 python src/ingestion/bigquery_loader.py --directory data/raw/brazilian-ecommerce
@@ -1464,12 +1464,7 @@ notifications:
     on_failure: true
     on_success: false
     recipients:
-      - data-team@company.com
-
-  slack:
-    on_failure: true
-    channel: "#data-alerts"
-    webhook_url: "${SLACK_WEBHOOK_URL}"
+      - az@azni.me
 
 run_timeout_seconds: 3600 # 1 hour timeout
 ```
@@ -1978,15 +1973,5 @@ gcloud run deploy samba-insight-dashboard \
 2. **Sales Operations Dashboard** - Daily volume, payment methods, fulfillment
 3. **Customer Analytics Dashboard** - RFM segmentation, LTV, retention
 4. **Data Quality Dashboard** - Pipeline health, test results, freshness
-
-**BigQuery Connection:**
-
-```
-Data Source: BigQuery
-Project: project-samba-insight
-Dataset: warehouse
-Tables: fact_orders, dim_customer, mart_sales_daily, mart_sales_monthly
-Refresh: Every 30 minutes (automatic)
-```
 
 ---

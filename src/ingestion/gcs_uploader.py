@@ -4,13 +4,26 @@ GCS Uploader Module
 Uploads data files to Google Cloud Storage.
 """
 
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union
 
-from ..utils.config import get_config
-from ..utils.gcs_helper import GCSHelper
-from ..utils.logger import get_logger
+# Add project root to path if running as standalone script
+if __name__ == "__main__" or __package__ is None:
+    project_root = Path(__file__).resolve().parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+# Handle both relative imports (when used as module) and absolute imports (when run directly)
+try:
+    from ..utils.config import get_config
+    from ..utils.gcs_helper import GCSHelper
+    from ..utils.logger import get_logger
+except ImportError:
+    from src.utils.config import get_config
+    from src.utils.gcs_helper import GCSHelper
+    from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -253,7 +266,10 @@ def main():
 
 
 if __name__ == "__main__":
-    from ..utils.logger import setup_logging
+    try:
+        from ..utils.logger import setup_logging
+    except ImportError:
+        from src.utils.logger import setup_logging
 
     setup_logging("gcs_uploader")
     main()

@@ -3,12 +3,12 @@
 # Project: Samba Insight - Brazil E-Commerce Analytics
 # ============================================================================
 
-name: 'samba_insight'
-version: '1.0.0'
+name: "samba_insight"
+version: "1.0.0"
 config-version: 2
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'samba_insight'
+profile: "samba_insight"
 
 # Model paths
 model-paths: ["models"]
@@ -35,37 +35,37 @@ models:
     staging:
       +materialized: view
       +schema: staging
-      +tags: ['staging']
+      +tags: ["staging"]
       +docs:
-        node_color: "#80CBC4"  # Light teal
+        node_color: "#80CBC4" # Light teal
 
     # Warehouse models - Star schema (dimensions and facts)
     warehouse:
       +schema: warehouse
-      +tags: ['warehouse']
+      +tags: ["warehouse"]
       +docs:
-        node_color: "#81C784"  # Light green
+        node_color: "#81C784" # Light green
 
       dimensions:
         +materialized: table
-        +tags: ['dimension']
+        +tags: ["dimension"]
         +docs:
-          node_color: "#64B5F6"  # Light blue
+          node_color: "#64B5F6" # Light blue
 
       facts:
         +materialized: incremental
         +on_schema_change: "fail"
-        +tags: ['fact']
+        +tags: ["fact"]
         +docs:
-          node_color: "#FFB74D"  # Light orange
+          node_color: "#FFB74D" # Light orange
 
     # Marts models - Business-specific aggregations
     marts:
       +materialized: table
       +schema: warehouse
-      +tags: ['mart']
+      +tags: ["mart"]
       +docs:
-        node_color: "#BA68C8"  # Light purple
+        node_color: "#BA68C8" # Light purple
 
 # Seeds configuration (if needed in future)
 # seeds:
@@ -82,8 +82,8 @@ models:
 # Global configurations
 vars:
   # Date configuration
-  start_date: '2016-09-04'  # First date in dataset
-  end_date: '2018-10-17'    # Last date in dataset
+  start_date: "2016-09-04" # First date in dataset
+  end_date: "2018-10-17" # Last date in dataset
 
   # Incremental run configuration
   lookback_days: 3
@@ -98,4 +98,4 @@ vars:
 # dbt-utils dispatch configuration (if using dbt-utils)
 dispatch:
   - macro_namespace: dbt_utils
-    search_order: ['samba_insight', 'dbt_utils']
+    search_order: ["samba_insight", "dbt_utils"]

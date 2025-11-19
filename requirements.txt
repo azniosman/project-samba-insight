@@ -24,7 +24,7 @@ google-cloud-secret-manager==2.17.0
 google-cloud-storage==2.14.0
 
 # Great Expectations
-great_expectations==1.9.0
+great_expectations==0.18.19
 ipykernel==6.27.1
 isort==5.13.2  # Import sorting
 

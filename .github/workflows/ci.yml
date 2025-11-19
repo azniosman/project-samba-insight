@@ -1,0 +1,192 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev, feature]
+  pull_request:
+    branches: [main, dev, feature]
+
+env:
+  PYTHON_VERSION: "3.11"
+  DBT_VERSION: "1.8.5"
+
+jobs:
+  # ============================================================================
+  # Job 1: Quality & Tests (Consolidated)
+  # ============================================================================
+  quality-and-tests:
+    name: Quality & Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [python-quality, python-tests, sql-quality]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          if [[ "${{ matrix.task }}" == "sql-quality" ]]; then
+            pip install sqlfluff sqlfluff-templater-dbt
+          elif [[ "${{ matrix.task }}" == *"python"* ]]; then
+            pip install dbt-core==${{ env.DBT_VERSION }} dbt-bigquery==1.8.3
+          fi
+
+      - name: Python Quality Checks
+        if: matrix.task == 'python-quality'
+        run: |
+          black --check src/ tests/ &
+          isort --check-only src/ tests/ &
+          flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503,D200,D400,D401,F401,SIM117,SIM222 &
+          mypy src/ --ignore-missing-imports &
+          bandit -r src/ -ll -f json -o bandit-report.json &
+          wait
+
+      - name: Python Tests
+        if: matrix.task == 'python-tests'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DATASET_RAW: test_raw
+          GCP_DATASET_STAGING: test_staging
+          GCP_DATASET_WAREHOUSE: test_warehouse
+          GCS_BUCKET_NAME: test-bucket
+        run: |
+          if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
+            pytest tests/unit/ --cov=src --cov-report=xml -x
+          else
+            echo "No unit tests found - skipping"
+          fi
+
+      - name: SQL Quality
+        if: matrix.task == 'sql-quality'
+        continue-on-error: true
+        run: |
+          cd dbt && sqlfluff lint models/ --dialect bigquery || echo "SQL linting completed with warnings"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.task }}-artifacts
+          path: |
+            bandit-report.json
+            coverage.xml
+          retention-days: 7
+
+  # ============================================================================
+  # Job 2: dbt Validation (Parallel)
+  # ============================================================================
+  dbt-validation:
+    name: dbt Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dbt
+        run: pip install dbt-core==${{ env.DBT_VERSION }} dbt-bigquery==1.8.3
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Create dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          samba_insight:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: oauth
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: dev_warehouse
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
+      - name: dbt compile & test
+        run: |
+          cd dbt
+          dbt deps --quiet
+          dbt compile --quiet
+          dbt test --target dev --fail-fast
+
+  # ============================================================================
+  # Job 3: Integration Tests (Conditional)
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: quality-and-tests
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run integration tests
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          if [ -d "tests/integration" ] && [ -n "$(find tests/integration -name 'test_*.py' -o -name '*_test.py')" ]; then
+            pytest tests/integration/ -x --tb=short
+          else
+            echo "No integration tests found - skipping"
+          fi
+
+  # ============================================================================
+  # Job 4: Deploy (Production Only)
+  # ============================================================================
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [quality-and-tests, integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy & Trigger dbt
+        run: |
+          # Deploy dashboard
+          gcloud run deploy samba-insight-dashboard \
+            --source src/dashboards --region us-central1 \
+            --allow-unauthenticated --quiet &
+
+          # Trigger dbt Cloud job
+          curl -X POST -H "Authorization: Token ${{ secrets.DBT_CLOUD_API_KEY }}" \
+            "https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_CLOUD_ACCOUNT_ID }}/jobs/${{ secrets.DBT_CLOUD_JOB_ID }}/run/" &
+
+          wait
