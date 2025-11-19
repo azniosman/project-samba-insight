@@ -1,0 +1,288 @@
+version: 2
+
+models:
+  - name: mart_sales_daily
+    description: >
+      Daily sales metrics aggregated by date, product category, and customer state.
+      Pre-aggregated for optimal dashboard performance.
+
+    config:
+      tags: ['mart', 'sales']
+
+    columns:
+      - name: order_date
+        description: Date of the order
+        tests:
+          - not_null
+
+      - name: product_category
+        description: Product category in English
+
+      - name: customer_state
+        description: Customer state (BR state code)
+
+      - name: total_orders
+        description: Total number of orders
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: total_revenue
+        description: Total revenue in BRL
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: delivery_rate_pct
+        description: Percentage of orders delivered
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100 or delivery_rate_pct is null"
+
+      - name: on_time_rate_pct
+        description: Percentage of on-time deliveries
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+
+  - name: mart_sales_monthly
+    description: >
+      Monthly sales metrics with month-over-month and year-over-year growth calculations.
+      Optimized for executive dashboards and trend analysis.
+
+    config:
+      tags: ['mart', 'sales']
+
+    columns:
+      - name: month_date
+        description: First day of the month
+        tests:
+          - not_null
+
+      - name: product_category
+        description: Product category in English
+
+      - name: customer_state
+        description: Customer state (BR state code)
+
+      - name: total_orders
+        description: Total orders in the month
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: total_revenue
+        description: Total revenue in the month (BRL)
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: mom_revenue_growth_pct
+        description: Month-over-month revenue growth percentage
+
+      - name: yoy_revenue_growth_pct
+        description: Year-over-year revenue growth percentage
+
+      - name: avg_daily_orders
+        description: Average daily orders in the month
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: avg_daily_revenue
+        description: Average daily revenue in the month
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+  - name: mart_customer_cohorts
+    description: >
+      Customer cohort analysis based on acquisition month.
+      Includes lifetime value, segment distribution, and cohort performance metrics.
+
+    config:
+      tags: ['mart', 'customer']
+
+    columns:
+      - name: cohort_month
+        description: Month when customers made their first purchase
+        tests:
+          - not_null
+
+      - name: customer_state
+        description: Customer state (BR state code)
+
+      - name: cohort_size
+        description: Number of customers acquired in this cohort
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: customer_ltv
+        description: Customer lifetime value (average revenue per customer)
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: avg_orders_per_customer
+        description: Average number of orders per customer in cohort
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: loyal_pct
+        description: Percentage of loyal customers (3+ orders)
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+
+      - name: repeat_pct
+        description: Percentage of repeat customers (2 orders)
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+
+      - name: one_time_pct
+        description: Percentage of one-time customers
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+
+  - name: mart_customer_retention
+    description: >
+      Month-by-month retention analysis showing cohort retention rates over time.
+      Enables retention curve analysis and churn prediction.
+
+    config:
+      tags: ['mart', 'customer']
+
+    columns:
+      - name: cohort_month
+        description: Month when customers made their first purchase
+        tests:
+          - not_null
+
+      - name: activity_month
+        description: Month of customer activity
+        tests:
+          - not_null
+
+      - name: customer_state
+        description: Customer state (BR state code)
+
+      - name: months_since_cohort
+        description: Number of months since cohort month (0 = acquisition month)
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: cohort_size
+        description: Original size of the cohort
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: active_customers
+        description: Number of customers active in this month
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: retention_rate_pct
+        description: Retention rate (active customers / cohort size)
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+
+      - name: mom_retention_pct
+        description: Month-over-month retention percentage
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100 or mom_retention_pct is null"
+
+      - name: cumulative_revenue
+        description: Cumulative revenue from cohort through this month
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+  - name: mart_product_performance
+    description: >
+      Product performance metrics by month including rankings, growth rates,
+      and category comparisons. Optimized for product analytics and inventory planning.
+
+    config:
+      tags: ['mart', 'product']
+
+    columns:
+      - name: month_date
+        description: First day of the month
+        tests:
+          - not_null
+
+      - name: product_id
+        description: Unique product identifier
+        tests:
+          - not_null
+
+      - name: product_category
+        description: Product category in English
+
+      - name: sales_tier
+        description: Product sales tier (best_seller, high_volume, etc.)
+
+      - name: total_orders
+        description: Total orders for this product in the month
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: total_revenue
+        description: Total revenue for this product in the month (BRL)
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: avg_review_score
+        description: Average review score for the product
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 1 and 5 or avg_review_score is null"
+
+      - name: category_revenue_rank
+        description: Revenue rank within category (1 = highest)
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: overall_revenue_rank
+        description: Overall revenue rank (1 = highest revenue product)
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: mom_revenue_growth_pct
+        description: Month-over-month revenue growth percentage
+
+      - name: on_time_delivery_pct
+        description: Percentage of on-time deliveries
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100 or on_time_delivery_pct is null"
+
+      - name: freight_pct
+        description: Freight cost as percentage of total revenue
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"

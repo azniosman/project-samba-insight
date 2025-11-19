@@ -1,0 +1,98 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw Brazilian E-Commerce data from Kaggle, loaded to BigQuery staging
+    database: project-samba-insight
+    schema: staging
+
+    # Data freshness configuration
+    # Warn if data is older than 24 hours, error if older than 48 hours
+    # Uses BigQuery table metadata (last modified time) for freshness checks
+    freshness:
+      warn_after:
+        count: 24
+        period: hour
+      error_after:
+        count: 48
+        period: hour
+
+    tables:
+      - name: orders_raw
+        description: Raw orders data
+        columns:
+          - name: order_id
+            description: Unique identifier for the order
+            tests:
+              - unique
+              - not_null
+
+      - name: customers_raw
+        description: Raw customers data
+        columns:
+          - name: customer_id
+            description: Unique identifier for the customer in this order
+            tests:
+              - unique
+              - not_null
+          - name: customer_unique_id
+            description: Unique identifier for the customer across all orders
+            tests:
+              - not_null
+
+      - name: products_raw
+        description: Raw products data
+        columns:
+          - name: product_id
+            description: Unique identifier for the product
+            tests:
+              - unique
+              - not_null
+
+      - name: order_items_raw
+        description: Raw order items (line items) data
+        columns:
+          - name: order_id
+            description: Order identifier
+            tests:
+              - not_null
+          - name: order_item_id
+            description: Sequential number identifying items within the same order
+            tests:
+              - not_null
+
+      - name: order_payments_raw
+        description: Raw payment data
+        columns:
+          - name: order_id
+            description: Order identifier
+            tests:
+              - not_null
+
+      - name: order_reviews_raw
+        description: Raw customer reviews data
+        columns:
+          - name: review_id
+            description: Unique identifier for the review
+            tests:
+              - not_null
+              # Note: Source has 789 duplicate review_ids
+          - name: order_id
+            description: Order identifier
+            tests:
+              - not_null
+
+      - name: sellers_raw
+        description: Raw sellers data
+        columns:
+          - name: seller_id
+            description: Unique identifier for the seller
+            tests:
+              - unique
+              - not_null
+
+      - name: geolocation_raw
+        description: Raw geolocation data for Brazilian zip codes
+
+      - name: product_category_translation_raw
+        description: Translation of product category names from Portuguese to English

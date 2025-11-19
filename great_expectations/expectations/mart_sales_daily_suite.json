@@ -1,0 +1,72 @@
+{
+  "expectation_suite_name": "mart_sales_daily_suite",
+  "ge_cloud_id": null,
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 1000,
+        "max_value": 100000
+      },
+      "meta": {
+        "notes": "Daily sales mart should have reasonable number of rows"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "order_date"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "total_orders",
+        "min_value": 0,
+        "max_value": 10000
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "total_revenue",
+        "min_value": 0,
+        "max_value": 10000000
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "delivery_rate_pct",
+        "min_value": 0,
+        "max_value": 100,
+        "mostly": 1.0
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "on_time_rate_pct",
+        "min_value": 0,
+        "max_value": 100,
+        "mostly": 1.0
+      }
+    },
+    {
+      "expectation_type": "expect_column_mean_to_be_between",
+      "kwargs": {
+        "column": "avg_review_score",
+        "min_value": 3.0,
+        "max_value": 5.0
+      },
+      "meta": {
+        "notes": "Average review score across all data should be between 3-5"
+      }
+    }
+  ],
+  "data_asset_type": "Dataset",
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "description": "Expectation suite for mart_sales_daily - validates daily sales aggregations"
+  }
+}

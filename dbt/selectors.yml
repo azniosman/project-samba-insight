@@ -1,0 +1,81 @@
+---
+# dbt Cloud Job Selectors
+# These selectors define reusable model selection patterns for dbt Cloud jobs
+
+selectors:
+  # Daily production job - runs all models incrementally
+  - name: daily_run
+    description: "Daily production run - all models with incremental logic"
+    definition:
+      method: fqn
+      value: "*"
+      exclude:
+        - tag:adhoc
+        - tag:dev_only
+
+  # Staging layer only
+  - name: staging_only
+    description: "Run only staging models"
+    definition:
+      method: tag
+      value: staging
+
+  # Warehouse layer (dimensions + facts)
+  - name: warehouse_only
+    description: "Run only warehouse models (dimensions and facts)"
+    definition:
+      union:
+        - method: tag
+          value: dimension
+        - method: tag
+          value: fact
+
+  # Marts layer only
+  - name: marts_only
+    description: "Run only mart models (business aggregations)"
+    definition:
+      method: tag
+      value: mart
+
+  # Full refresh job - rebuilds everything from scratch
+  - name: full_refresh
+    description: "Full refresh of all incremental models"
+    definition:
+      union:
+        - method: tag
+          value: fact
+        - method: tag
+          value: mart
+
+  # Weekly dimension rebuild
+  - name: weekly_dimensions
+    description: "Weekly rebuild of dimension tables"
+    definition:
+      method: tag
+      value: dimension
+
+  # Critical path - minimum models for dashboards
+  - name: critical_path
+    description: "Critical models needed for dashboards"
+    definition:
+      union:
+        - method: fqn
+          value: "warehouse.facts.fact_orders"
+        - method: fqn
+          value: "warehouse.dimensions.*"
+        - method: tag
+          value: mart
+
+  # Data quality tests only
+  - name: quality_tests
+    description: "Run only data quality tests"
+    definition:
+      method: test_type
+      value: data
+
+  # Source freshness check
+  - name: source_freshness
+    description: "Check source data freshness only"
+    definition:
+      method: source
+      value: "*"

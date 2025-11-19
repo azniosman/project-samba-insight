@@ -1,0 +1,179 @@
+# Pre-commit Configuration
+# ============================================================================
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+# ============================================================================
+
+default_language_version:
+  python: python3.9
+
+repos:
+  # ============================================================================
+  # General Hooks
+  # ============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(dbt/|\.md$)
+      - id: end-of-file-fixer
+        exclude: ^dbt/
+      - id: check-yaml
+        args: ["--unsafe"] # Allow custom YAML tags
+        exclude: ^dbt/
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+        exclude: ^tests/(unit|integration)/conftest\.py$
+      - id: requirements-txt-fixer
+        files: requirements.*\.txt$
+
+  # ============================================================================
+  # Security Checks
+  # ============================================================================
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^tests/
+
+  # Safety hook temporarily disabled due to compatibility issues
+  # - repo: https://github.com/pyupio/safety
+  #   rev: 3.0.1
+  #   hooks:
+  #     - id: safety
+  #       args: ["--ignore=70612"] # Ignore specific CVE if needed
+  #       files: requirements.*\.txt$
+
+  # ============================================================================
+  # Python Code Formatting
+  # ============================================================================
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3.9
+        args: ["--config", "pyproject.toml"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort
+        args: ["--settings-path", "pyproject.toml"]
+
+  # ============================================================================
+  # Python Code Linting
+  # ============================================================================
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args:
+          - "--max-line-length=100"
+          - "--extend-ignore=E203,E501,W503,E402,D400,D401,SIM901" # Ignore black-incompatible rules and docstring formatting
+          - "--exclude=.git,__pycache__,dbt,build,dist,.venv,venv"
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
+
+  # ============================================================================
+  # Type Checking
+  # ============================================================================
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        args: ["--config-file", "pyproject.toml"]
+        additional_dependencies:
+          - types-requests
+          - types-python-dateutil
+          - types-PyYAML
+        exclude: ^(tests/|dbt/)
+
+  # ============================================================================
+  # Documentation
+  # ============================================================================
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args:
+          - "--convention=google"
+          - "--add-ignore=D100,D104,D105,D107,D212,D415" # Ignore docstring formatting
+        exclude: ^(tests/|dbt/)
+        additional_dependencies: ["tomli"]
+
+  # ============================================================================
+  # Markdown & YAML Linting
+  # ============================================================================
+  # Markdownlint disabled due to Ruby version incompatibility
+  # - repo: https://github.com/markdownlint/markdownlint
+  #   rev: v0.12.0
+  #   hooks:
+  #     - id: markdownlint
+  #       args: ["--rules", "~MD013,~MD033"] # Ignore line length and inline HTML
+
+  # ============================================================================
+  # SQL Linting (for dbt)
+  # ============================================================================
+  # SQLFluff disabled for dbt files due to complex jinja template handling
+  # dbt has its own compilation and validation processes
+  # - repo: https://github.com/sqlfluff/sqlfluff
+  #   rev: 3.0.0
+  #   hooks:
+  #     - id: sqlfluff-lint
+  #       files: ^dbt/models/.*\.sql$
+
+  # ============================================================================
+  # Notebook Checks
+  # ============================================================================
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.7.1
+    hooks:
+      - id: nbqa-black
+        additional_dependencies: [black==23.12.1]
+
+      - id: nbqa-isort
+        additional_dependencies: [isort==5.13.2]
+
+      - id: nbqa-flake8
+        args: ["--max-line-length=100", "--extend-ignore=E203,E402,E501,W291,E225,F401,F541"]
+        additional_dependencies: [flake8==6.1.0]
+
+  # Clear notebook outputs before committing
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+      - id: nbstripout
+        args: ["--extra-keys", "metadata.kernelspec metadata.language_info"]
+
+# ============================================================================
+# CI Configuration (optional)
+# ============================================================================
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: "dev"
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
+  autoupdate_schedule: weekly
+  skip: [] # Safety hook is disabled
+  submodules: false
