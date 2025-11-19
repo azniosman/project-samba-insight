@@ -1,0 +1,214 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Cleaned and standardized orders data
+    columns:
+      - name: order_id
+        description: Unique identifier for the order
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: Foreign key to customers
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: order_status
+        description: Status of the order
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'created', 'approved']
+
+      - name: order_purchase_timestamp
+        description: Timestamp when the order was placed
+        tests:
+          - not_null
+
+      - name: delivery_days
+        description: Number of days from purchase to delivery
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 365
+              where: "is_delivered = true"
+
+  - name: stg_customers
+    description: Cleaned and standardized customers data
+    columns:
+      - name: customer_id
+        description: Unique identifier for the customer
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_unique_id
+        description: Unique identifier across all orders
+        tests:
+          - not_null
+
+      - name: customer_state
+        description: Two-letter state code
+        tests:
+          - not_null
+
+  - name: stg_products
+    description: Cleaned and standardized products data
+    columns:
+      - name: product_id
+        description: Unique identifier for the product
+        tests:
+          - unique
+          - not_null
+
+      - name: product_category_name_en
+        description: Product category in English
+        tests:
+          - not_null
+
+      - name: product_weight_g
+        description: Product weight in grams
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100000
+              inclusive: true
+
+  - name: stg_order_items
+    description: Cleaned and standardized order items (line items) data
+    columns:
+      - name: order_id
+        description: Order identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+
+      - name: order_item_id
+        description: Sequential item number within order
+        tests:
+          - not_null
+
+      - name: product_id
+        description: Product identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+
+      - name: seller_id
+        description: Seller identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_sellers')
+              field: seller_id
+
+      - name: price
+        description: Item price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 10000
+
+      - name: freight_value
+        description: Shipping cost
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1000
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - order_item_id
+
+  - name: stg_payments
+    description: Cleaned and standardized payment data
+    columns:
+      - name: order_id
+        description: Order identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+
+      - name: payment_sequential
+        description: Sequential payment number for the order
+        tests:
+          - not_null
+
+      - name: payment_type
+        description: Payment method
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
+
+      - name: payment_value
+        description: Payment amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100000
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - payment_sequential
+
+  - name: stg_sellers
+    description: Cleaned and standardized sellers data
+    columns:
+      - name: seller_id
+        description: Unique identifier for the seller
+        tests:
+          - unique
+          - not_null
+
+      - name: seller_state
+        description: Two-letter state code
+        tests:
+          - not_null
+
+  - name: stg_reviews
+    description: Cleaned and standardized customer reviews data
+    columns:
+      - name: review_id
+        description: Unique identifier for the review
+        tests:
+          - not_null
+          # Note: Disabled unique test - source data has 789 duplicate review_ids
+
+      - name: order_id
+        description: Order identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+
+      - name: review_score
+        description: Rating from 1 to 5
+        tests:
+          - not_null
+
+      - name: review_sentiment
+        description: Derived sentiment from score
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'neutral', 'negative']

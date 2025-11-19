@@ -1,4 +1,4 @@
-# Project Insight: Brazil E-Commerce
+# Project Samba Insight: Brazil E-Commerce
 
 ## Overview
 

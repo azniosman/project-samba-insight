@@ -1,0 +1,25 @@
+[sqlfluff]
+templater = jinja
+dialect = bigquery
+exclude_rules = L016,L031,LT02
+max_line_length = 120
+# Suppress templating warnings
+nocolor = True
+
+[sqlfluff:indentation]
+tab_space_size = 4
+indent_unit = space
+
+[sqlfluff:layout:type:comma]
+line_position = trailing
+
+[sqlfluff:rules]
+allow_scalar = True
+single_table_references = consistent
+unquoted_identifiers_policy = all
+
+[sqlfluff:rules:L010]
+capitalisation_policy = lower
+
+[sqlfluff:rules:L030]
+capitalisation_policy = lower

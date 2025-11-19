@@ -1,0 +1,104 @@
+# Great Expectations Configuration
+# Documentation: https://docs.greatexpectations.io/
+
+config_version: 3.0
+
+datasources:
+  bigquery_warehouse:
+    class_name: Datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      connection_string: bigquery://project-samba-insight/dev_warehouse_warehouse
+      credentials:
+        type: service_account
+        project_id: project-samba-insight
+        # Uses GOOGLE_APPLICATION_CREDENTIALS environment variable
+
+    data_connectors:
+      default_runtime_data_connector:
+        class_name: RuntimeDataConnector
+        batch_identifiers:
+          - default_identifier_name
+
+      warehouse_data_connector:
+        class_name: ConfiguredAssetSqlDataConnector
+        assets:
+          fact_orders:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: fact_orders
+
+          dim_customer:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: dim_customer
+
+          dim_product:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: dim_product
+
+          dim_seller:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: dim_seller
+
+          dim_date:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: dim_date
+
+          mart_sales_daily:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: mart_sales_daily
+
+          mart_customer_cohorts:
+            class_name: Asset
+            schema_name: dev_warehouse_warehouse
+            table_name: mart_customer_cohorts
+
+config_variables_file_path: uncommitted/config_variables.yml
+
+plugins_directory: plugins/
+
+stores:
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: expectations/
+
+  validations_store:
+    class_name: ValidationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/validations/
+
+  evaluation_parameter_store:
+    class_name: EvaluationParameterStore
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: checkpoints/
+
+expectations_store_name: expectations_store
+validations_store_name: validations_store
+evaluation_parameter_store_name: evaluation_parameter_store
+checkpoint_store_name: checkpoint_store
+
+data_docs_sites:
+  local_site:
+    class_name: SiteBuilder
+    show_how_to_buttons: true
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+
+anonymous_usage_statistics:
+  enabled: false
+  data_context_id: samba-insight-project

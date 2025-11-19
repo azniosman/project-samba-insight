@@ -1,0 +1,69 @@
+# dbt Profile Configuration Template
+# ============================================================================
+# Copy this file to ~/.dbt/profiles.yml and fill in your actual values
+# Location: ~/.dbt/profiles.yml (default dbt profile location)
+# ============================================================================
+
+samba_insight:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id  # Replace with your GCP_PROJECT_ID
+      dataset: dev_warehouse         # Development dataset
+      threads: 4
+      timeout_seconds: 300
+      location: US                   # Or your preferred GCP region
+      priority: interactive
+      keyfile: /path/to/your/service-account-key.json  # Replace with your keyfile path
+
+      # Optional: Use application default credentials instead of keyfile
+      # method: oauth
+      # Remove 'keyfile' line above if using oauth
+
+    prod:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id  # Replace with your GCP_PROJECT_ID
+      dataset: warehouse             # Production dataset
+      threads: 8
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+      keyfile: /path/to/your/service-account-key.json
+
+    staging:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: staging
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+      keyfile: /path/to/your/service-account-key.json
+
+# ============================================================================
+# Setup Instructions:
+# 1. Create directory: mkdir -p ~/.dbt
+# 2. Copy template: cp profiles.yml.example ~/.dbt/profiles.yml
+# 3. Edit ~/.dbt/profiles.yml with your actual credentials
+# 4. Test connection: dbt debug (from the dbt/ directory)
+# ============================================================================
+
+# Alternative: Using environment variables
+# ============================================================================
+# You can also use Jinja to reference environment variables:
+#
+# samba_insight:
+#   target: dev
+#   outputs:
+#     dev:
+#       type: bigquery
+#       method: service-account
+#       project: "{{ env_var('GCP_PROJECT_ID') }}"
+#       dataset: dev_warehouse
+#       threads: 4
+#       keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+# ============================================================================

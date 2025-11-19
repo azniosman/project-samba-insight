@@ -1,0 +1,101 @@
+# dbt Project Configuration
+# ============================================================================
+# Project: Samba Insight - Brazil E-Commerce Analytics
+# ============================================================================
+
+name: 'samba_insight'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'samba_insight'
+
+# Model paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Target directory for compiled SQL and run artifacts
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Docs paths
+docs-paths: ["docs"]
+
+# Model Configurations
+# ============================================================================
+models:
+  samba_insight:
+    # Staging models - Clean and standardize raw data
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ['staging']
+      +docs:
+        node_color: "#80CBC4"  # Light teal
+
+    # Warehouse models - Star schema (dimensions and facts)
+    warehouse:
+      +schema: warehouse
+      +tags: ['warehouse']
+      +docs:
+        node_color: "#81C784"  # Light green
+
+      dimensions:
+        +materialized: table
+        +tags: ['dimension']
+        +docs:
+          node_color: "#64B5F6"  # Light blue
+
+      facts:
+        +materialized: incremental
+        +on_schema_change: "fail"
+        +tags: ['fact']
+        +docs:
+          node_color: "#FFB74D"  # Light orange
+
+    # Marts models - Business-specific aggregations
+    marts:
+      +materialized: table
+      +schema: warehouse
+      +tags: ['mart']
+      +docs:
+        node_color: "#BA68C8"  # Light purple
+
+# Seeds configuration (if needed in future)
+# seeds:
+#   samba_insight:
+#     +schema: seeds
+#     +tags: ['seed']
+
+# Snapshots configuration (if needed in future)
+# snapshots:
+#   samba_insight:
+#     +target_schema: snapshots
+#     +tags: ['snapshot']
+
+# Global configurations
+vars:
+  # Date configuration
+  start_date: '2016-09-04'  # First date in dataset
+  end_date: '2018-10-17'    # Last date in dataset
+
+  # Incremental run configuration
+  lookback_days: 3
+
+  # Data quality thresholds
+  quality:
+    min_order_value: 0
+    max_order_value: 100000
+    min_delivery_days: 0
+    max_delivery_days: 365
+
+# dbt-utils dispatch configuration (if using dbt-utils)
+dispatch:
+  - macro_namespace: dbt_utils
+    search_order: ['samba_insight', 'dbt_utils']
