@@ -54,6 +54,8 @@ jobs:
         if: matrix.task == 'python-tests'
         env:
           PYTHONPATH: ${{ github.workspace }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
         run: |
           if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
             pytest tests/unit/ --cov=src --cov-report=xml -x
