@@ -16,7 +16,7 @@ from google.oauth2 import service_account
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.config import get_config
+from src.utils.config import get_config  # noqa: E402
 
 
 @st.cache_resource

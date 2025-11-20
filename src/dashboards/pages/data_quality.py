@@ -15,7 +15,7 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.dashboards.db_connection import run_query
+from src.dashboards.db_connection import run_query  # noqa: E402
 
 
 def render():
