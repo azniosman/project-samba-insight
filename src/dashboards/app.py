@@ -48,7 +48,7 @@ st.markdown(
 st.sidebar.title("🎯 Navigation")
 st.sidebar.markdown("---")
 
-page = st.sidebar.radio(
+page: str = st.sidebar.radio(
     "Select Dashboard",
     [
         "🏠 Home",

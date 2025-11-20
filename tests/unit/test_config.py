@@ -29,13 +29,13 @@ class TestConfig:
 
         assert config1 is config2
 
-    @patch.dict(os.environ, {"GCP_PROJECT_ID": "project-samba-insight"})
+    @patch.dict(os.environ, {"GCP_PROJECT_ID": "project-samba-insight"}, clear=False)
     def test_config_loads_from_environment(self):
         """Test that Config loads values from environment variables."""
         # Clear singleton
         import src.utils.config
 
-        src.utils.config._config_instance = None
+        src.utils.config._config = None
 
         config = get_config()
         assert config.gcp_project_id == "project-samba-insight"
@@ -64,13 +64,13 @@ class TestConfig:
         assert isinstance(config.data_raw_dir, Path)
         assert isinstance(config.data_processed_dir, Path)
 
-    @patch.dict(os.environ, {"BQ_DATASET_STAGING": "staging"})
+    @patch.dict(os.environ, {"BQ_DATASET_STAGING": "staging"}, clear=False)
     def test_config_custom_dataset_names(self):
         """Test custom BigQuery dataset names from environment."""
         # Clear singleton
         import src.utils.config
 
-        src.utils.config._config_instance = None
+        src.utils.config._config = None
 
         config = get_config()
         assert config.bq_dataset_staging == "staging"
@@ -100,4 +100,4 @@ def reset_config_singleton():
     # Cleanup: reset singleton
     import src.utils.config
 
-    src.utils.config._config_instance = None
+    src.utils.config._config = None

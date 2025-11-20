@@ -30,16 +30,21 @@ class TestKaggleDownloader:
         assert downloader.download_dir == custom_dir
 
     @patch("src.ingestion.kaggle_downloader.KaggleApi")
-    def test_download_dataset(self, mock_kaggle_api):
+    @patch("src.ingestion.kaggle_downloader.Path.exists")
+    @patch("src.ingestion.kaggle_downloader.Path.glob")
+    def test_download_dataset(self, mock_glob, mock_exists, mock_kaggle_api):
         """Test dataset download."""
         mock_api = mock_kaggle_api.return_value
         mock_api.dataset_download_files = MagicMock()
+        # Mock that dataset doesn't exist yet (force download)
+        mock_exists.return_value = False
+        mock_glob.return_value = []
 
         downloader = KaggleDownloader()
         dataset_name = "olistbr/brazilian-ecommerce"
 
         with patch("src.ingestion.kaggle_downloader.zipfile.ZipFile"):
-            result = downloader.download_dataset(dataset_name)
+            result = downloader.download_dataset(dataset_name, force=True)
 
             assert result is not None
             mock_api.dataset_download_files.assert_called_once()
