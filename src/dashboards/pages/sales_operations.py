@@ -10,6 +10,9 @@ from pathlib import Path
 import plotly.express as px
 import streamlit as st
 
+from src.utils.config import get_config
+from src.utils.logger import setup_logging
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
