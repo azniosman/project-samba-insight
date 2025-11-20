@@ -25,9 +25,9 @@ class TestKaggleDownloader:
     def test_initialization_with_custom_output_dir(self, mock_kaggle_api):
         """Test initialization with custom output directory."""
         custom_dir = Path("/tmp/custom_kaggle_data")
-        downloader = KaggleDownloader(output_dir=custom_dir)
+        downloader = KaggleDownloader(download_dir=custom_dir)
 
-        assert downloader.output_dir == custom_dir
+        assert downloader.download_dir == custom_dir
 
     @patch("src.ingestion.kaggle_downloader.KaggleApi")
     def test_download_dataset(self, mock_kaggle_api):

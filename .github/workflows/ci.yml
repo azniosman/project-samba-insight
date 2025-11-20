@@ -102,6 +102,7 @@ jobs:
         run: pip install dbt-core==${{ env.DBT_VERSION }} dbt-bigquery==1.8.3
 
       - uses: google-github-actions/auth@v2.1.1
+        id: auth
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
@@ -117,12 +118,14 @@ jobs:
                 method: service-account
                 project: ${{ secrets.GCP_PROJECT_ID }}
                 dataset: dev_warehouse
-                keyfile: \${GOOGLE_APPLICATION_CREDENTIALS}
+                keyfile: ${{ steps.auth.outputs.credentials_file_path }}
                 threads: 4
                 timeout_seconds: 300
           EOF
 
       - name: dbt compile & test
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           cd dbt
           dbt deps --quiet

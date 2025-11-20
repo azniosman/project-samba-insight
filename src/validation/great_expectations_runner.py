@@ -53,7 +53,9 @@ class GreatExpectationsRunner:
 
         # Initialize GE context
         try:
-            self.context = gx.get_context(context_root_dir=str(context_root_dir))  # type: ignore[attr-defined]
+            self.context = gx.get_context(  # type: ignore[attr-defined]
+                context_root_dir=str(context_root_dir)
+            )
             logger.info(f"Loaded Great Expectations context from {context_root_dir}")
         except Exception as e:
             logger.error(f"Failed to load GE context: {e}")
