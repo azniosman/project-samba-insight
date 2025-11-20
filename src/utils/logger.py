@@ -79,6 +79,7 @@ def setup_logging(
     root_logger.addHandler(file_handler)
 
     # Configure structlog
+    renderer = structlog.processors.JSONRenderer() if log_file else structlog.dev.ConsoleRenderer()
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
@@ -87,7 +88,7 @@ def setup_logging(
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer() if log_file else structlog.dev.ConsoleRenderer(),
+            renderer,
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level),
         context_class=dict,
