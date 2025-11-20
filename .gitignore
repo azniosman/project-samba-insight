@@ -90,6 +90,11 @@ dbt_packages/
 dbt_modules/
 
 # ----------------------
+# Great Expectations
+# ----------------------
+great_expectations/uncommitted/data_docs/
+
+# ----------------------
 # Jupyter / IPython
 # ----------------------
 profile_default/

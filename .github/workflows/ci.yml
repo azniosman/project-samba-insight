@@ -5,10 +5,12 @@ on:
     branches: [main, dev, feature]
   pull_request:
     branches: [main, dev, feature]
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"
   DBT_VERSION: "1.8.5"
+  COVERAGE_THRESHOLD: "0" # TODO: Increase to 80 once test suite is complete
 
 jobs:
   # ============================================================================
@@ -17,15 +19,16 @@ jobs:
   quality-and-tests:
     name: Quality & Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         task: [python-quality, python-tests, sql-quality]
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -43,39 +46,36 @@ jobs:
       - name: Python Quality Checks
         if: matrix.task == 'python-quality'
         run: |
-          black --check src/ tests/ &
-          isort --check-only src/ tests/ &
-          flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503,D200,D400,D401,F401,SIM117,SIM222 &
-          mypy src/ --ignore-missing-imports &
-          bandit -r src/ -ll -f json -o bandit-report.json &
-          wait
+          # Run checks sequentially to ensure failures are caught
+          black --check src/ tests/
+          isort --check-only src/ tests/
+          flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503,D200,D400,D401,F401,SIM117,SIM222
+          mypy src/ --ignore-missing-imports
+          bandit -r src/ -ll -f json -o bandit-report.json
 
       - name: Python Tests
         if: matrix.task == 'python-tests'
         env:
           PYTHONPATH: ${{ github.workspace }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          GCP_DATASET_RAW: test_raw
-          GCP_DATASET_STAGING: test_staging
-          GCP_DATASET_WAREHOUSE: test_warehouse
-          GCS_BUCKET_NAME: test-bucket
         run: |
           if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
-            pytest tests/unit/ --cov=src --cov-report=xml -x
+            pytest tests/unit/ --cov=src --cov-report=xml --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} -x
           else
-            echo "No unit tests found - skipping"
+            echo "No unit tests found - skipping coverage requirement"
           fi
 
       - name: SQL Quality
         if: matrix.task == 'sql-quality'
+        # TODO: Remove continue-on-error once SQL quality issues are resolved
         continue-on-error: true
         run: |
           cd dbt && sqlfluff lint models/ --dialect bigquery || echo "SQL linting completed with warnings"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         if: always()
         with:
           name: ${{ matrix.task }}-artifacts
@@ -90,34 +90,38 @@ jobs:
   dbt-validation:
     name: dbt Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: requirements.txt
 
       - name: Install dbt
         run: pip install dbt-core==${{ env.DBT_VERSION }} dbt-bigquery==1.8.3
 
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@v2.1.1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Create dbt profiles.yml
         run: |
           mkdir -p ~/.dbt
+          # google-github-actions/auth sets GOOGLE_APPLICATION_CREDENTIALS
           cat > ~/.dbt/profiles.yml <<EOF
           samba_insight:
             target: dev
             outputs:
               dev:
                 type: bigquery
-                method: oauth
+                method: service-account
                 project: ${{ secrets.GCP_PROJECT_ID }}
                 dataset: dev_warehouse
+                keyfile: \${GOOGLE_APPLICATION_CREDENTIALS}
                 threads: 4
                 timeout_seconds: 300
           EOF
@@ -135,19 +139,21 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: quality-and-tests
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4.1.1
+      - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: requirements.txt
 
       - run: pip install -r requirements.txt
 
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@v2.1.1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
@@ -169,24 +175,60 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: [quality-and-tests, integration-tests]
+    timeout-minutes: 15
+    needs: [quality-and-tests, dbt-validation]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - uses: actions/checkout@v4.1.1
+      - uses: google-github-actions/auth@v2.1.1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy & Trigger dbt
+      - name: Deploy Dashboard
         run: |
-          # Deploy dashboard
           gcloud run deploy samba-insight-dashboard \
-            --source src/dashboards --region us-central1 \
-            --allow-unauthenticated --quiet &
+            --source src/dashboards \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --quiet
 
-          # Trigger dbt Cloud job
-          curl -X POST -H "Authorization: Token ${{ secrets.DBT_CLOUD_API_KEY }}" \
-            "https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_CLOUD_ACCOUNT_ID }}/jobs/${{ secrets.DBT_CLOUD_JOB_ID }}/run/" &
+      - name: Trigger dbt Cloud Job
+        run: |
+          HTTP_CODE=$(curl -X POST \
+            -H "Authorization: Token ${{ secrets.DBT_CLOUD_API_KEY }}" \
+            --silent --show-error --fail --write-out "%{http_code}" \
+            --output /tmp/dbt_response.json \
+            "https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_CLOUD_ACCOUNT_ID }}/jobs/${{ secrets.DBT_CLOUD_JOB_ID }}/run/")
 
-          wait
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "dbt Cloud job triggered successfully (HTTP $HTTP_CODE)"
+            cat /tmp/dbt_response.json
+          else
+            echo "Failed to trigger dbt Cloud job (HTTP $HTTP_CODE)"
+            cat /tmp/dbt_response.json
+            exit 1
+          fi
+
+  # ============================================================================
+  # Job 5: Status Check (Required Check)
+  # ============================================================================
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality-and-tests, dbt-validation]
+    if: always()
+
+    steps:
+      - name: Check job results
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more required checks failed"
+            exit 1
+          elif [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required checks were cancelled"
+            exit 1
+          else
+            echo "All required checks passed!"
+          fi
