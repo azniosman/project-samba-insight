@@ -65,6 +65,18 @@ class KaggleDownloader:
 
         logger.info("kaggle_downloader_initialized", download_dir=str(self.download_dir))
 
+    def _extract_zip(self, zip_path: Path, extract_dir: Path) -> None:
+        """
+        Extract a ZIP file to a directory.
+
+        Args:
+            zip_path: Path to the ZIP file
+            extract_dir: Directory to extract files to
+        """
+        logger.info("extracting_zip", zip_file=str(zip_path))
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(extract_dir)
+
     def download_dataset(
         self,
         dataset: str = DEFAULT_DATASET,
@@ -116,9 +128,7 @@ class KaggleDownloader:
             if not unzip:
                 zip_files = list(dataset_dir.glob("*.zip"))
                 for zip_file in zip_files:
-                    logger.info("extracting_zip", zip_file=str(zip_file))
-                    with zipfile.ZipFile(zip_file, "r") as zip_ref:
-                        zip_ref.extractall(dataset_dir)
+                    self._extract_zip(zip_file, dataset_dir)
                     # Remove zip file after extraction
                     zip_file.unlink()
 
