@@ -65,8 +65,8 @@ class TestKaggleDownloader:
 
         downloader = KaggleDownloader()
 
-        # Should return existing path without downloading
-        result = downloader.download_dataset("olistbr/brazilian-ecommerce", skip_if_exists=True)
+        # Should return existing path without downloading (force=False is default)
+        result = downloader.download_dataset("olistbr/brazilian-ecommerce", force=False)
 
         assert result is not None
 
