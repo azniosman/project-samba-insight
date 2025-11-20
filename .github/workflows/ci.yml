@@ -10,7 +10,6 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   DBT_VERSION: "1.8.5"
-  COVERAGE_THRESHOLD: "0" # TODO: Increase to 80 once test suite is complete
 
 jobs:
   # ============================================================================
@@ -46,7 +45,6 @@ jobs:
       - name: Python Quality Checks
         if: matrix.task == 'python-quality'
         run: |
-          # Run checks sequentially to ensure failures are caught
           black --check src/ tests/
           isort --check-only src/ tests/
           flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503,D200,D400,D401,F401,SIM117,SIM222
@@ -62,17 +60,16 @@ jobs:
           KAGGLE_KEY: ${{ secrets.KAGGLE_API_KEY }}
         run: |
           if [ -d "tests/unit" ] && [ -n "$(find tests/unit -name 'test_*.py' -o -name '*_test.py')" ]; then
-            pytest tests/unit/ --cov=src --cov-report=xml --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} -x
+            pytest tests/unit/ --cov=src --cov-report=xml -x
           else
-            echo "No unit tests found - skipping coverage requirement"
+            echo "No unit tests found - skipping"
           fi
 
       - name: SQL Quality
         if: matrix.task == 'sql-quality'
-        # TODO: Remove continue-on-error once SQL quality issues are resolved
         continue-on-error: true
         run: |
-          cd dbt && sqlfluff lint models/ --dialect bigquery || echo "SQL linting completed with warnings"
+          cd dbt && sqlfluff lint models/ --dialect bigquery
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4.3.1
@@ -111,7 +108,6 @@ jobs:
       - name: Create dbt profiles.yml
         run: |
           mkdir -p ~/.dbt
-          # google-github-actions/auth sets GOOGLE_APPLICATION_CREDENTIALS
           cat > ~/.dbt/profiles.yml <<EOF
           samba_insight:
             target: dev
@@ -145,13 +141,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.1.1
+
       - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: requirements.txt
 
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - uses: google-github-actions/auth@v2.1.1
         with:
@@ -173,42 +171,61 @@ jobs:
   # Job 4: Deploy (Production Only)
   # ============================================================================
   deploy:
-    name: Deploy
+    name: Deploy to Production
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [quality-and-tests, dbt-validation]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://samba-insight-dashboard.run.app
 
     steps:
       - uses: actions/checkout@v4.1.1
+
       - uses: google-github-actions/auth@v2.1.1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy Dashboard
+      - name: Deploy Dashboard to Cloud Run
+        id: deploy
         run: |
           gcloud run deploy samba-insight-dashboard \
             --source src/dashboards \
             --region us-central1 \
             --allow-unauthenticated \
+            --platform managed \
+            --memory 2Gi \
+            --cpu 1 \
+            --max-instances 10 \
+            --timeout 300 \
             --quiet
 
       - name: Trigger dbt Cloud Job
         run: |
           HTTP_CODE=$(curl -X POST \
             -H "Authorization: Token ${{ secrets.DBT_CLOUD_API_KEY }}" \
+            -H "Content-Type: application/json" \
             --silent --show-error --fail --write-out "%{http_code}" \
             --output /tmp/dbt_response.json \
             "https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_CLOUD_ACCOUNT_ID }}/jobs/${{ secrets.DBT_CLOUD_JOB_ID }}/run/")
 
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "dbt Cloud job triggered successfully (HTTP $HTTP_CODE)"
+            echo "✅ dbt Cloud job triggered successfully (HTTP $HTTP_CODE)"
             cat /tmp/dbt_response.json
           else
-            echo "Failed to trigger dbt Cloud job (HTTP $HTTP_CODE)"
+            echo "❌ Failed to trigger dbt Cloud job (HTTP $HTTP_CODE)"
             cat /tmp/dbt_response.json
             exit 1
           fi
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard**: Deployed to Cloud Run" >> $GITHUB_STEP_SUMMARY
+          echo "- **dbt Job**: Triggered successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
   # Job 5: Status Check (Required Check)
@@ -223,12 +240,18 @@ jobs:
     steps:
       - name: Check job results
         run: |
+          echo "## CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Quality & Tests**: ${{ needs.quality-and-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **dbt Validation**: ${{ needs.dbt-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
           if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
-            echo "One or more required checks failed"
+            echo "❌ One or more required checks failed" >> $GITHUB_STEP_SUMMARY
             exit 1
           elif [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
-            echo "One or more required checks were cancelled"
+            echo "⚠️  One or more required checks were cancelled" >> $GITHUB_STEP_SUMMARY
             exit 1
           else
-            echo "All required checks passed!"
+            echo "✅ All required checks passed!" >> $GITHUB_STEP_SUMMARY
           fi
