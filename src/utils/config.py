@@ -42,18 +42,13 @@ class Config:
         # Environment
         self.environment = os.getenv("ENVIRONMENT", "dev")
 
-        # BigQuery Dataset Names
-        # Raw data staging (no environment prefix - used by ingestion scripts)
-        self.bq_dataset_raw_staging = os.getenv("BQ_DATASET_STAGING", "staging")
+        # BigQuery Configuration
+        self.bq_database = os.getenv("BQ_DATABASE", self.gcp_project_id)
 
-        # dbt datasets (with environment prefix - used by dbt and notebooks)
-        # Pattern: {environment}_warehouse_{schema}
-        base_dataset = f"{self.environment}_warehouse"
-        self.bq_dataset_staging = os.getenv("BQ_DATASET_STAGING_DBT", f"{base_dataset}_staging")
-        self.bq_dataset_warehouse = os.getenv("BQ_DATASET_WAREHOUSE", f"{base_dataset}_warehouse")
-        self.bq_dataset_marts = os.getenv(
-            "BQ_DATASET_MARTS", f"{base_dataset}_warehouse"
-        )  # Marts use warehouse schema
+        # BigQuery Dataset Names (Schemas)
+        self.bq_dataset_raw = os.getenv("BQ_DATASET_RAW", "staging")
+        self.bq_dataset_staging = os.getenv("BQ_DATASET_STAGING", "staging")
+        self.bq_dataset_warehouse = os.getenv("BQ_DATASET_WAREHOUSE", "warehouse")
 
         # Logging
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -122,10 +117,10 @@ class Config:
             f"Config("
             f"environment='{self.environment}', "
             f"gcp_project_id='{self.gcp_project_id}', "
-            f"bq_dataset_raw_staging='{self.bq_dataset_raw_staging}', "
+            f"bq_database='{self.bq_database}', "
+            f"bq_dataset_raw='{self.bq_dataset_raw}', "
             f"bq_dataset_staging='{self.bq_dataset_staging}', "
             f"bq_dataset_warehouse='{self.bq_dataset_warehouse}', "
-            f"bq_dataset_marts='{self.bq_dataset_marts}', "
             f"log_level='{self.log_level}', "
             f"kaggle_configured={self.kaggle_configured}, "
             f"gcp_configured={self.gcp_configured}"
