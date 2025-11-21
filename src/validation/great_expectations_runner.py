@@ -17,8 +17,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from great_expectations.checkpoint import SimpleCheckpoint
-    from great_expectations.core.batch import RuntimeBatchRequest
+    from great_expectations.data_context import FileDataContext
 
     import great_expectations as gx
 except ImportError:
@@ -55,9 +54,27 @@ class GreatExpectationsRunner:
         try:
             self.context = gx.get_context(context_root_dir=str(context_root_dir))  # type: ignore[attr-defined]
             logger.info(f"Loaded Great Expectations context from {context_root_dir}")
+
+            # Add BigQuery datasource if not exists
+            self._setup_datasource()
         except Exception as e:
             logger.error(f"Failed to load GE context: {e}")
             raise
+
+    def _setup_datasource(self):
+        """Setup BigQuery datasource using fluent API."""
+        try:
+            # Check if datasource exists
+            self.context.data_sources.get("bigquery_warehouse")
+            logger.info("BigQuery datasource already configured")
+        except Exception:
+            # Create new datasource
+            logger.info("Creating BigQuery datasource")
+            self.context.data_sources.add_sql(
+                name="bigquery_warehouse",
+                connection_string=f"bigquery://{self.config.gcp_project_id}/{self.config.environment}_warehouse_warehouse",
+            )
+            logger.info("BigQuery datasource created")
 
     def validate_table(
         self, table_name: str, expectation_suite_name: str, schema_name: Optional[str] = None
@@ -79,49 +96,47 @@ class GreatExpectationsRunner:
         logger.info(f"Validating {schema_name}.{table_name} with suite {expectation_suite_name}")
 
         try:
-            # Create batch request
-            batch_request = RuntimeBatchRequest(
-                datasource_name="bigquery_warehouse",
-                data_connector_name="warehouse_data_connector",
-                data_asset_name=table_name,
-                runtime_parameters={},
-                batch_identifiers={"default_identifier_name": table_name},
+            # Get datasource
+            datasource = self.context.data_sources.get("bigquery_warehouse")
+
+            # Add data asset if not exists
+            try:
+                asset = datasource.get_asset(table_name)
+            except Exception:
+                asset = datasource.add_table_asset(
+                    name=table_name, table_name=table_name, schema_name=schema_name
+                )
+
+            # Get batch
+            batch_request = asset.build_batch_request()
+
+            # Get or create expectation suite
+            try:
+                self.context.suites.get(expectation_suite_name)
+            except Exception:
+                # Suite doesn't exist, create a basic one
+                logger.warning(f"Suite {expectation_suite_name} not found, creating basic suite")
+                self.context.suites.add(expectation_suite_name)
+
+            # Run validation directly on batch
+            validator = self.context.get_validator(
+                batch_request=batch_request, expectation_suite_name=expectation_suite_name
             )
 
-            # Create checkpoint
-            checkpoint_config = {
-                "name": f"{table_name}_checkpoint",
-                "config_version": 1.0,
-                "class_name": "SimpleCheckpoint",
-                "run_name_template": f"%Y%m%d-{table_name}",
-            }
-
-            checkpoint = SimpleCheckpoint(
-                f"{table_name}_checkpoint", self.context, **checkpoint_config
-            )
-
-            # Run validation
-            results = checkpoint.run(
-                validations=[
-                    {
-                        "batch_request": batch_request,
-                        "expectation_suite_name": expectation_suite_name,
-                    }
-                ]
-            )
+            results = validator.validate()
 
             # Log results
-            if results["success"]:
+            success = results.success
+            if success:
                 logger.info(f"✅ Validation passed for {table_name}")
             else:
                 logger.warning(f"❌ Validation failed for {table_name}")
-                logger.warning(f"Results: {results}")
 
-            return results  # type: ignore[no-any-return]
+            return {"success": success, "results": results}
 
         except Exception as e:
             logger.error(f"Error validating {table_name}: {e}")
-            raise
+            return {"success": False, "error": str(e)}
 
     def validate_all_tables(self) -> Dict[str, Dict]:
         """

@@ -3,7 +3,6 @@ Kaggle Data Downloader Module
 
 Downloads Brazilian E-Commerce dataset from Kaggle.
 """
-
 import os
 import sys
 import zipfile
@@ -168,28 +167,18 @@ class KaggleDownloader:
             raise
 
     def get_dataset_metadata(self, dataset: str = DEFAULT_DATASET) -> dict:
-        """
-        Get metadata about a Kaggle dataset.
-
-        Args:
-            dataset: Dataset identifier
-
-        Returns:
-            Dictionary with dataset metadata
-        """
+        """Get metadata about a Kaggle dataset."""
         try:
-            metadata = self.api.dataset_view(dataset)
+            files_info = self.api.dataset_list_files(dataset)
             info = {
-                "title": metadata.title,
-                "subtitle": metadata.subtitle,
-                "creator_name": metadata.creatorName,
-                "total_bytes": metadata.totalBytes,
-                "url": metadata.url,
-                "last_updated": str(metadata.lastUpdated),
-                "download_count": metadata.downloadCount,
-                "vote_count": metadata.voteCount,
+                "dataset": dataset,
+                "url": f"https://www.kaggle.com/datasets/{dataset}",
+                "file_count": len(files_info.files),
+                "files": [f.name for f in files_info.files],
             }
-            logger.info("dataset_metadata_retrieved", dataset=dataset, title=info["title"])
+            logger.info(
+                "dataset_metadata_retrieved", dataset=dataset, file_count=info["file_count"]
+            )
             return info
         except Exception as e:
             logger.error("metadata_retrieval_failed", dataset=dataset, error=str(e))

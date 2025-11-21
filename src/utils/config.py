@@ -115,6 +115,7 @@ class Config:
         """String representation of configuration (hides sensitive data)."""
         return (
             f"Config("
+            f"environment='{self.environment}', "
             f"gcp_project_id='{self.gcp_project_id}', "
             f"bq_database='{self.bq_database}', "
             f"bq_dataset_raw='{self.bq_dataset_raw}', "

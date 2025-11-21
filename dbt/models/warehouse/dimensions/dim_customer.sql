@@ -66,10 +66,15 @@ final as (
         coalesce(rm.total_reviews, 0) as total_reviews,
 
         -- Customer Segmentation
+        -- Adjusted thresholds based on e-commerce behavior patterns:
+        -- - Loyal: 3+ orders (top tier, highly engaged customers)
+        -- - Repeat: 2 orders (returning customers, good retention)
+        -- - One-time: 1 order (majority of e-commerce customers)
         case
-            when cm.total_orders >= 5 then 'loyal'
-            when cm.total_orders >= 2 then 'repeat'
-            else 'one_time'
+            when cm.total_orders >= 3 then 'loyal'
+            when cm.total_orders = 2 then 'repeat'
+            when cm.total_orders = 1 then 'one_time'
+            else 'unknown'  -- Should not happen, but handle edge case
         end as customer_segment,
 
         -- Data Quality
