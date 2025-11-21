@@ -14,7 +14,7 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.dashboards.db_connection import run_query  # noqa: E402
+from src.dashboards.db_connection import get_table_fqn, run_query  # noqa: E402
 
 
 def render():
@@ -27,13 +27,13 @@ def render():
     # Top categories
     st.markdown("### 📦 Top Product Categories")
 
-    category_query = """
+    category_query = f"""
     WITH order_products AS (
         SELECT DISTINCT
             oi.order_id,
             p.product_category_name_en as category
         FROM `project-samba-insight.dev_warehouse_staging.stg_order_items` oi
-        JOIN `project-samba-insight.dev_warehouse_warehouse.dim_product` p
+        JOIN {get_table_fqn("dim_product")} p
             ON oi.product_id = p.product_id
     )
     SELECT
@@ -41,7 +41,7 @@ def render():
         COUNT(DISTINCT f.order_id) as orders,
         ROUND(SUM(f.total_order_value), 2) as revenue,
         ROUND(AVG(f.total_order_value), 2) as avg_order_value
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders` f
+    FROM {get_table_fqn("fact_orders")} f
     JOIN order_products op
         ON f.order_id = op.order_id
     WHERE f.order_status = 'delivered'
@@ -87,13 +87,13 @@ def render():
     # Geographic distribution
     st.markdown("### 🗺️ Sales by State")
 
-    geo_query = """
+    geo_query = f"""
     SELECT
         c.customer_state as state,
         COUNT(DISTINCT f.order_id) as orders,
         ROUND(SUM(f.total_order_value), 2) as revenue
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders` f
-    JOIN `project-samba-insight.dev_warehouse_warehouse.dim_customer` c
+    FROM {get_table_fqn("fact_orders")} f
+    JOIN {get_table_fqn("dim_customer")} c
         ON f.customer_key = c.customer_key
     WHERE f.order_status = 'delivered'
     GROUP BY state
@@ -132,13 +132,13 @@ def render():
     # Payment analysis
     st.markdown("### 💳 Payment Method Analysis")
 
-    payment_query = """
+    payment_query = f"""
     SELECT
         payment_types,
         COUNT(*) as orders,
         ROUND(SUM(total_payment_value), 2) as total_paid,
         ROUND(AVG(max_installments), 2) as avg_installments
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn("fact_orders")}
     WHERE payment_types IS NOT NULL
         AND order_status = 'delivered'
     GROUP BY payment_types
@@ -176,7 +176,7 @@ def render():
     # Seller performance
     st.markdown("### 🏪 Top Performing Sellers")
 
-    seller_query = """
+    seller_query = f"""
     SELECT
         seller_id,
         seller_city,
@@ -185,7 +185,7 @@ def render():
         total_revenue,
         unique_products_sold,
         seller_tier
-    FROM `project-samba-insight.dev_warehouse_warehouse.dim_seller`
+    FROM {get_table_fqn("dim_seller")}
     WHERE total_orders > 0
     ORDER BY total_revenue DESC
     LIMIT 20

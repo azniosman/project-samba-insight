@@ -3,8 +3,8 @@ version: 2
 sources:
   - name: raw
     description: Raw Brazilian E-Commerce data from Kaggle, loaded to BigQuery staging
-    database: project-samba-insight
-    schema: dev_warehouse_staging
+    database: "{{ env_var('BQ_DATABASE', 'project-samba-insight') }}"
+    schema: "{{ env_var('BQ_DATASET_RAW', 'staging') }}"
 
     # Data freshness configuration
     # Warn if data is older than 24 hours, error if older than 48 hours
