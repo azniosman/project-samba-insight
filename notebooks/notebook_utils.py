@@ -28,11 +28,18 @@ class NotebookConfig:
         if str(self.project_root) not in sys.path:
             sys.path.insert(0, str(self.project_root))
 
+        # Force reload environment variables from .env file
+        from dotenv import load_dotenv
+
+        env_file = self.project_root / ".env"
+        if env_file.exists():
+            load_dotenv(env_file, override=True)
+
         # Try to import config utility (preferred method)
         try:
             from src.utils.config import get_config
 
-            config = get_config()
+            config = get_config(reload=True)  # Force reload to pick up latest env vars
             self.project_id = config.gcp_project_id
             self.credentials_path = config.google_application_credentials
             # Use warehouse dataset from config (environment-aware)
@@ -308,7 +315,13 @@ class VisualizationHelper:
         figsize = figsize or (14, 8)
         fig, ax = plt.subplots(figsize=figsize)
 
-        sns.heatmap(df, annot=True, fmt=".1f", cmap=cmap, ax=ax, **kwargs)
+        # Set default values for annot and fmt if not provided in kwargs
+        if "annot" not in kwargs:
+            kwargs["annot"] = True
+        if "fmt" not in kwargs:
+            kwargs["fmt"] = ".1f"
+
+        sns.heatmap(df, cmap=cmap, ax=ax, **kwargs)
         ax.set_title(title, fontsize=16, fontweight="bold")
         if xlabel:
             ax.set_xlabel(xlabel, fontsize=12)
