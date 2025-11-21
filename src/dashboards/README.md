@@ -97,14 +97,18 @@ app.py                    # Main application entry point
 ## Data Sources
 
 All dashboards query from BigQuery:
-- **Project:** project-samba-insight
-- **Dataset:** dev_warehouse_warehouse
+- **Project:** Configured via `GCP_PROJECT_ID` environment variable
+- **Dataset:** Configured via `BQ_DATASET_WAREHOUSE` environment variable
+  - Development: `dev_warehouse_warehouse`
+  - Production: `warehouse`
 - **Tables:**
   - fact_orders (99,441 rows)
   - dim_customer
   - dim_product
   - dim_seller
   - dim_date
+
+The dataset and project are automatically resolved from your `.env` file configuration, ensuring the dashboard connects to the correct environment.
 
 ## Configuration
 

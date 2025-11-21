@@ -57,6 +57,59 @@ Ther result is a scalable, transparent and well governed data platform that enab
 | **Access Control**  | Google Cloud IAM + BigQuery permissions            | Row/column-level security, audit logging                              |
 | **Version Control** | GitHub                                             | Single source of truth, CI/CD integration                             |
 
+---
+
+### Environment Configuration
+
+The project is designed to work across multiple environments (development, staging, production) with environment-specific dataset configurations.
+
+**Setup Instructions:**
+
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure your environment variables in `.env`:**
+   ```bash
+   # Environment: dev, staging, or prod
+   ENVIRONMENT=dev
+
+   # GCP Configuration
+   GCP_PROJECT_ID=your-gcp-project-id
+   GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
+
+   # Kaggle Credentials
+   KAGGLE_USERNAME=your-kaggle-username
+   KAGGLE_KEY=your-kaggle-api-key
+
+   # BigQuery Datasets (Environment-Aware)
+   BQ_DATASET_RAW=staging                      # Raw data landing zone
+   BQ_DATASET_STAGING=dev_warehouse_staging    # dbt staging models (dev)
+   BQ_DATASET_WAREHOUSE=dev_warehouse_warehouse # dbt warehouse models (dev)
+   ```
+
+**Environment-Specific Datasets:**
+
+| Environment | Raw Data | Staging Models | Warehouse Models |
+|-------------|----------|----------------|------------------|
+| **Development** | `staging` | `dev_warehouse_staging` | `dev_warehouse_warehouse` |
+| **Production** | `staging` | `staging` | `warehouse` |
+
+**Why Environment Prefixes?**
+
+- **Safety:** Prevents accidental queries/modifications to production data
+- **Collaboration:** Multiple developers can work in the same GCP project without conflicts
+- **Clarity:** Dataset names explicitly show which environment you're working in
+- **dbt Convention:** Follows dbt's standard practice for non-production environments
+
+**Configuration Hierarchy:**
+
+1. All Python code reads from `.env` via `src/utils/config.py`
+2. dbt profiles use the same environment variables
+3. Dashboards and notebooks automatically use the correct datasets based on `ENVIRONMENT`
+4. Great Expectations validation uses environment-aware connection strings
+
 ## 2. Data Ingestion
 
 ### Strategy
