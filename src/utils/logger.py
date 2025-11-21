@@ -19,7 +19,7 @@ def setup_logging(
     name: str = "samba_insight",
     log_level: Optional[str] = None,
     log_file: Optional[Path] = None,
-) -> structlog.BoundLogger:
+) -> "structlog.BoundLogger":
     """
     Set up structured logging with both console and file output.
 
@@ -103,7 +103,7 @@ def setup_logging(
     return logger
 
 
-def get_logger(name: str = "samba_insight") -> structlog.BoundLogger:
+def get_logger(name: str = "samba_insight") -> "structlog.BoundLogger":
     """
     Get a configured logger instance.
 
@@ -120,6 +120,6 @@ class LoggerMixin:
     """Mixin class that adds a logger property to any class."""
 
     @property
-    def logger(self) -> structlog.BoundLogger:
+    def logger(self) -> "structlog.BoundLogger":
         """Get logger for this class."""
         return get_logger(self.__class__.__name__)
