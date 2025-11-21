@@ -15,6 +15,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.dashboards.db_connection import get_table_fqn, run_query  # noqa: E402
+from src.utils.config import get_config  # noqa: E402
 
 
 def render():
@@ -24,6 +25,9 @@ def render():
 
     st.markdown("---")
 
+    # Get config for dataset references
+    config = get_config()
+
     # Top categories
     st.markdown("### 📦 Top Product Categories")
 
@@ -32,7 +36,7 @@ def render():
         SELECT DISTINCT
             oi.order_id,
             p.product_category_name_en as category
-        FROM `project-samba-insight.dev_warehouse_staging.stg_order_items` oi
+        FROM {get_table_fqn("stg_order_items", dataset=config.bq_dataset_staging)} oi
         JOIN {get_table_fqn("dim_product")} p
             ON oi.product_id = p.product_id
     )

@@ -90,13 +90,13 @@ fluent_datasources:
         id: 7132a2db-06d9-4d83-bf80-9b2ca487fea3
         batch_metadata: {}
         table_name: fact_orders
-        schema_name: dev_warehouse_warehouse
+        schema_name: ${BQ_DATASET_WAREHOUSE}
       mart_sales_daily:
         type: table
         id: 8659f3fe-2a5e-4fdd-85d6-2addab0b471c
         batch_metadata: {}
         table_name: mart_sales_daily
-        schema_name: dev_warehouse_warehouse
-    connection_string: bigquery://project-samba-insight/dev_warehouse_warehouse
+        schema_name: ${BQ_DATASET_WAREHOUSE}
+    connection_string: bigquery://${GCP_PROJECT_ID}/${BQ_DATASET_WAREHOUSE}
 analytics_enabled:
 data_context_id: c77292dc-c939-4e42-992d-f930da589e84

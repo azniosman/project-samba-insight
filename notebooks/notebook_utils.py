@@ -28,20 +28,24 @@ class NotebookConfig:
         if str(self.project_root) not in sys.path:
             sys.path.insert(0, str(self.project_root))
 
-        # Try to import config
+        # Try to import config utility (preferred method)
         try:
             from src.utils.config import get_config
 
             config = get_config()
             self.project_id = config.gcp_project_id
             self.credentials_path = config.google_application_credentials
-            # Use warehouse dataset from config (includes environment prefix)
+            # Use warehouse dataset from config (environment-aware)
+            # Dev: dev_warehouse_warehouse | Prod: warehouse
             self.dataset = config.bq_dataset_warehouse
         except ImportError:
-            # Fallback to environment variables
+            # Fallback: read directly from environment variables if config import fails
             self.credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
             self.project_id = os.getenv("GCP_PROJECT_ID", "project-samba-insight")
-            # Fallback dataset with environment prefix
+
+            # Dataset with intelligent fallback:
+            # 1. Use BQ_DATASET_WAREHOUSE if set
+            # 2. Otherwise construct from ENVIRONMENT: {env}_warehouse_warehouse
             env = os.getenv("ENVIRONMENT", "dev")
             self.dataset = os.getenv("BQ_DATASET_WAREHOUSE", f"{env}_warehouse_warehouse")
 
