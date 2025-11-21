@@ -66,11 +66,13 @@ The project is designed to work across multiple environments (development, stagi
 **Setup Instructions:**
 
 1. **Copy the environment template:**
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Configure your environment variables in `.env`:**
+
    ```bash
    # Environment: dev, staging, or prod
    ENVIRONMENT=dev
@@ -91,10 +93,10 @@ The project is designed to work across multiple environments (development, stagi
 
 **Environment-Specific Datasets:**
 
-| Environment | Raw Data | Staging Models | Warehouse Models |
-|-------------|----------|----------------|------------------|
+| Environment     | Raw Data  | Staging Models          | Warehouse Models          |
+| --------------- | --------- | ----------------------- | ------------------------- |
 | **Development** | `staging` | `dev_warehouse_staging` | `dev_warehouse_warehouse` |
-| **Production** | `staging` | `staging` | `warehouse` |
+| **Production**  | `staging` | `staging`               | `warehouse`               |
 
 **Why Environment Prefixes?**
 
@@ -1042,10 +1044,16 @@ python src/validation/great_expectations_runner.py \
     --build-docs
 
 # Validate all tables with their respective suites
-python src/validation/great_expectations_runner.py --validate-all
+python src/validation/great_expectations_runner.py
 
 # Generate Data Docs (HTML reports)
 python src/validation/great_expectations_runner.py --build-docs
+
+  # Validate SINGLE table
+  python src/validation/great_expectations_runner.py --table fact_orders --suite fact_orders_suite
+
+  # Validate SINGLE table + build docs
+  python src/validation/great_expectations_runner.py --table fact_orders --suite fact_orders_suite --build-docs
 ```
 
 **Python Validation Runner:** `src/validation/great_expectations_runner.py`
