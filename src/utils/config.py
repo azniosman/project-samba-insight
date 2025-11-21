@@ -42,10 +42,13 @@ class Config:
         # Environment
         self.environment = os.getenv("ENVIRONMENT", "dev")
 
-        # BigQuery Dataset Names
+        # BigQuery Configuration
+        self.bq_database = os.getenv("BQ_DATABASE", self.gcp_project_id)
+
+        # BigQuery Dataset Names (Schemas)
+        self.bq_dataset_raw = os.getenv("BQ_DATASET_RAW", "staging")
         self.bq_dataset_staging = os.getenv("BQ_DATASET_STAGING", "staging")
         self.bq_dataset_warehouse = os.getenv("BQ_DATASET_WAREHOUSE", "warehouse")
-        self.bq_dataset_marts = os.getenv("BQ_DATASET_MARTS", "marts")
 
         # Logging
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -113,9 +116,10 @@ class Config:
         return (
             f"Config("
             f"gcp_project_id='{self.gcp_project_id}', "
+            f"bq_database='{self.bq_database}', "
+            f"bq_dataset_raw='{self.bq_dataset_raw}', "
             f"bq_dataset_staging='{self.bq_dataset_staging}', "
             f"bq_dataset_warehouse='{self.bq_dataset_warehouse}', "
-            f"bq_dataset_marts='{self.bq_dataset_marts}', "
             f"log_level='{self.log_level}', "
             f"kaggle_configured={self.kaggle_configured}, "
             f"gcp_configured={self.gcp_configured}"

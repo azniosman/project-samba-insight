@@ -14,7 +14,7 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.dashboards.db_connection import run_query  # noqa: E402
+from src.dashboards.db_connection import get_table_fqn, run_query  # noqa: E402
 
 
 def render():
@@ -27,13 +27,13 @@ def render():
     # Customer segments
     st.markdown("### 🎯 Customer Segmentation")
 
-    segment_query = """
+    segment_query = f"""
     SELECT
         customer_segment,
         COUNT(*) as customers,
         ROUND(AVG(total_orders), 2) as avg_orders,
         ROUND(AVG(total_orders * 150), 2) as estimated_ltv
-    FROM `project-samba-insight.dev_warehouse_warehouse.dim_customer`
+    FROM {get_table_fqn("dim_customer")}
     WHERE total_orders > 0
     GROUP BY customer_segment
     ORDER BY customers DESC
@@ -82,12 +82,12 @@ def render():
     # Geographic distribution
     st.markdown("### 📍 Customer Geographic Distribution")
 
-    cust_geo_query = """
+    cust_geo_query = f"""
     SELECT
         customer_state,
         COUNT(*) as customers,
         ROUND(AVG(total_orders), 2) as avg_orders_per_customer
-    FROM `project-samba-insight.dev_warehouse_warehouse.dim_customer`
+    FROM {get_table_fqn("dim_customer")}
     WHERE total_orders > 0
     GROUP BY customer_state
     ORDER BY customers DESC
@@ -113,12 +113,12 @@ def render():
     # Review sentiment analysis
     st.markdown("### ⭐ Review Sentiment Analysis")
 
-    sentiment_query = """
+    sentiment_query = f"""
     SELECT
         review_sentiment,
         COUNT(*) as count,
         ROUND(AVG(review_score), 2) as avg_score
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn("fact_orders")}
     WHERE review_sentiment IS NOT NULL
     GROUP BY review_sentiment
     ORDER BY
@@ -169,7 +169,7 @@ def render():
     # Top customers
     st.markdown("### 🌟 Top Customers by Order Volume")
 
-    top_customers_query = """
+    top_customers_query = f"""
     SELECT
         customer_id,
         customer_city,
@@ -178,7 +178,7 @@ def render():
         delivered_orders,
         avg_review_score,
         customer_segment
-    FROM `project-samba-insight.dev_warehouse_warehouse.dim_customer`
+    FROM {get_table_fqn("dim_customer")}
     WHERE total_orders > 0
     ORDER BY total_orders DESC
     LIMIT 25

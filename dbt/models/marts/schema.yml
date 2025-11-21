@@ -286,3 +286,327 @@ models:
         tests:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 100"
+
+  # ============================================================================
+  # NEW EXECUTIVE ANALYTICS MODELS
+  # ============================================================================
+
+  - name: mart_customer_retention_quarterly
+    description: >
+      Quarterly customer retention analysis tracking repeat purchase rates.
+      Core metric for retention strategy and executive reporting.
+
+    config:
+      tags: ['mart', 'customer', 'retention', 'executive']
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - cohort_quarter_start
+            - customer_state
+            - customer_city
+            - quarters_since_cohort
+
+    columns:
+      - name: cohort_quarter_start
+        description: First day of acquisition quarter
+        tests:
+          - not_null
+
+      - name: customer_state
+        description: Customer state
+        tests:
+          - not_null
+
+      - name: customer_city
+        description: Customer city
+        tests:
+          - not_null
+
+      - name: quarters_since_cohort
+        description: Quarters since acquisition (0 = acquisition quarter)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 20
+
+      - name: retention_rate_pct
+        description: Quarterly repeat purchase rate
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: ltv_to_date
+        description: Customer lifetime value to date
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100000
+
+  - name: mart_geographic_performance
+    description: >
+      State and city-level performance analysis for geographic expansion strategy.
+      Identifies market opportunities and concentration risks.
+
+    config:
+      tags: ['mart', 'geographic', 'executive']
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - customer_state
+            - customer_city
+
+    columns:
+      - name: customer_state
+        description: Customer state
+        tests:
+          - not_null
+
+      - name: customer_city
+        description: Customer city
+        tests:
+          - not_null
+
+      - name: total_revenue
+        description: Total revenue from this geography
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: retention_rate_pct
+        description: Customer retention rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: expansion_priority
+        description: Strategic expansion priority
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Expand Aggressively'
+                - 'Expand Cautiously'
+                - 'Fix Operations First'
+                - 'Monitor'
+
+      - name: market_maturity
+        description: Market maturity classification
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'High Potential'
+                - 'Established'
+                - 'Premium Niche'
+                - 'Developing'
+                - 'Mature'
+
+  - name: mart_unit_economics
+    description: >
+      CAC payback and unit economics analysis by cohort.
+      **NOTE:** Currently uses estimated CAC. Replace with actual marketing spend data.
+
+    config:
+      tags: ['mart', 'economics', 'executive']
+
+    columns:
+      - name: cac
+        description: Customer acquisition cost (currently estimated)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1000
+
+      - name: ltv_cac_ratio
+        description: Lifetime value to CAC ratio (healthy > 3.0)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+
+      - name: cohort_health_score
+        description: Cohort health score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: unit_economics_status
+        description: Unit economics assessment
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'CRITICAL: Not recovering CAC'
+                - 'WARNING: Low margins'
+                - 'ACCEPTABLE: Room for improvement'
+                - 'GOOD: Healthy unit economics'
+                - 'EXCELLENT: Strong unit economics'
+
+  - name: mart_churn_prediction
+    description: >
+      Rule-based churn prediction model identifying at-risk customers.
+      Uses RFM + behavioral signals for retention prioritization.
+
+    config:
+      tags: ['mart', 'churn', 'executive', 'ml']
+
+    columns:
+      - name: customer_key
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: churn_risk_score
+        description: Composite churn risk score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: churn_probability
+        description: Churn probability (0-1)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: churn_status
+        description: Current churn status
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Churned'
+                - 'At Risk'
+                - 'Declining'
+                - 'Active'
+
+      - name: churn_risk_segment
+        description: Risk segmentation for prioritization
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Critical Risk'
+                - 'High Risk'
+                - 'Medium Risk'
+                - 'Low Risk'
+                - 'Healthy'
+
+      - name: retention_priority
+        description: Retention campaign priority
+        tests:
+          - not_null
+
+  - name: mart_category_performance
+    description: >
+      Product category performance analysis for diversification strategy.
+      Identifies growth opportunities and risk concentrations.
+
+    config:
+      tags: ['mart', 'category', 'executive']
+
+    columns:
+      - name: category
+        description: Product category (English)
+        tests:
+          - unique
+          - not_null
+
+      - name: total_revenue
+        description: Total category revenue
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: revenue_share_pct
+        description: Category share of total revenue
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: strategic_tier
+        description: Strategic importance tier
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Core Category'
+                - 'Growth Category'
+                - 'Emerging Category'
+                - 'Niche Category'
+
+      - name: performance_status
+        description: Performance assessment
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Star Performer'
+                - 'Solid Performer'
+                - 'Needs Improvement'
+                - 'Under Development'
+                - 'Stable'
+
+  - name: mart_executive_summary
+    description: >
+      Executive KPI summary consolidating all critical metrics.
+      Single source of truth for C-suite dashboard.
+
+    config:
+      tags: ['mart', 'executive', 'kpi']
+
+    columns:
+      - name: quarter_start
+        description: First day of quarter
+        tests:
+          - unique
+          - not_null
+
+      - name: total_revenue
+        description: Quarterly total revenue
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: revenue_growth_qoq_pct
+        description: Quarter-over-quarter revenue growth
+
+      - name: quarterly_retention_rate_pct
+        description: Q1 repeat purchase rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              where: "quarterly_retention_rate_pct is not null"
+
+      - name: strategic_health_score
+        description: Overall business health score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true

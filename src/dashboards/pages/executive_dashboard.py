@@ -15,7 +15,7 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.dashboards.db_connection import run_query  # noqa: E402
+from src.dashboards.db_connection import get_table_fqn, run_query  # noqa: E402
 
 
 def render():
@@ -31,7 +31,7 @@ def render():
     st.markdown("---")
 
     # Get KPIs
-    kpi_query = """
+    kpi_query = f"""
     SELECT
         COUNT(DISTINCT order_id) as total_orders,
         COUNT(DISTINCT customer_key) as total_customers,
@@ -39,7 +39,7 @@ def render():
         ROUND(AVG(total_order_value), 2) as avg_order_value,
         ROUND(AVG(review_score), 2) as avg_review_score,
         SUM(CASE WHEN is_on_time_delivery THEN 1 ELSE 0 END) / COUNT(*) * 100 as on_time_pct
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn('fact_orders')}
     WHERE order_status = 'delivered'
     """
 
@@ -71,12 +71,12 @@ def render():
     # Revenue trend
     st.markdown("### 📊 Monthly Revenue Trend")
 
-    revenue_trend_query = """
+    revenue_trend_query = f"""
     SELECT
         FORMAT_DATE('%Y-%m', order_purchase_date) as month,
         COUNT(DISTINCT order_id) as orders,
         ROUND(SUM(total_order_value), 2) as revenue
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn('fact_orders')}
     WHERE order_status = 'delivered'
     GROUP BY month
     ORDER BY month
@@ -128,11 +128,11 @@ def render():
     with col2:
         st.markdown("### ⭐ Review Score Distribution")
 
-        review_dist_query = """
+        review_dist_query = f"""
         SELECT
             review_score,
             COUNT(*) as count
-        FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+        FROM {get_table_fqn('fact_orders')}
         WHERE review_score IS NOT NULL
         GROUP BY review_score
         ORDER BY review_score
@@ -158,12 +158,12 @@ def render():
     # Order status breakdown
     st.markdown("### 📋 Order Status Breakdown")
 
-    status_query = """
+    status_query = f"""
     SELECT
         order_status,
         COUNT(*) as count,
         ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn('fact_orders')}
     GROUP BY order_status
     ORDER BY count DESC
     """

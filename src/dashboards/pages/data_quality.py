@@ -15,7 +15,7 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.dashboards.db_connection import run_query  # noqa: E402
+from src.dashboards.db_connection import get_table_fqn, run_query  # noqa: E402
 
 
 def render():
@@ -28,7 +28,7 @@ def render():
     # Overall health
     st.markdown("### 🏥 Overall Data Health")
 
-    health_query = """
+    health_query = f"""
     SELECT
         COUNT(*) as total_orders,
         SUM(CASE WHEN has_data_quality_issue THEN 1 ELSE 0 END) as quality_issues,
@@ -36,7 +36,7 @@ def render():
         SUM(CASE WHEN review_score IS NULL THEN 1 ELSE 0 END) as missing_reviews,
         SUM(CASE WHEN is_delivered THEN 1 ELSE 0 END) as delivered_orders,
         ROUND(AVG(delivery_days), 2) as avg_delivery_days
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn("fact_orders")}
     """
 
     health = run_query(health_query).iloc[0]
@@ -98,7 +98,7 @@ def render():
     # Delivery performance
     st.markdown("### 📦 Delivery Performance")
 
-    delivery_query = """
+    delivery_query = f"""
     SELECT
         CASE
             WHEN delivery_days <= 7 THEN '≤7 days'
@@ -109,7 +109,7 @@ def render():
         END as delivery_bucket,
         COUNT(*) as orders,
         ROUND(AVG(review_score), 2) as avg_review
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn("fact_orders")}
     WHERE is_delivered
         AND delivery_days IS NOT NULL
     GROUP BY delivery_bucket
@@ -155,12 +155,12 @@ def render():
     # Order status distribution
     st.markdown("### 📊 Order Pipeline Health")
 
-    status_query = """
+    status_query = f"""
     SELECT
         order_status,
         COUNT(*) as count,
         ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
-    FROM `project-samba-insight.dev_warehouse_warehouse.fact_orders`
+    FROM {get_table_fqn("fact_orders")}
     GROUP BY order_status
     ORDER BY count DESC
     """

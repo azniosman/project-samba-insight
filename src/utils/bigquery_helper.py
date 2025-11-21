@@ -285,13 +285,19 @@ class BigQueryHelper:
             )
             raise
 
-    def query(self, sql: str, as_dataframe: bool = True) -> Union[pd.DataFrame, bigquery.QueryJob]:
+    def query(
+        self,
+        sql: str,
+        as_dataframe: bool = True,
+        job_config: Optional[bigquery.QueryJobConfig] = None,
+    ) -> Union[pd.DataFrame, bigquery.QueryJob]:
         """
         Execute a SQL query.
 
         Args:
             sql: SQL query to execute
             as_dataframe: If True, return results as DataFrame
+            job_config: Optional QueryJobConfig for parameterized queries
 
         Returns:
             Query results as DataFrame or QueryJob
@@ -299,7 +305,7 @@ class BigQueryHelper:
         logger.info("executing_query", sql_preview=sql[:100])
 
         try:
-            query_job = self.client.query(sql)
+            query_job = self.client.query(sql, job_config=job_config)
             result = query_job.result()  # Wait for query to complete
 
             logger.info(

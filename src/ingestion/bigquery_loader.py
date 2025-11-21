@@ -172,13 +172,20 @@ class BigQueryLoader:
         sql = f"""
         SELECT COUNT(*) as count
         FROM `{self.bq_helper.project_id}.{self.staging_dataset}._load_metadata`
-        WHERE table_name = '{table_name}'
-          AND file_hash = '{file_hash}'
+        WHERE table_name = @table_name
+          AND file_hash = @file_hash
           AND status = 'SUCCESS'
         """
 
         try:
-            result = self.bq_helper.query(sql, as_dataframe=True)
+            # Use parameterized query to prevent SQL injection
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("table_name", "STRING", table_name),
+                    bigquery.ScalarQueryParameter("file_hash", "STRING", file_hash),
+                ]
+            )
+            result = self.bq_helper.query(sql, as_dataframe=True, job_config=job_config)
             return bool(result.iloc[0]["count"] > 0)
         except Exception:
             # If query fails, assume not loaded

@@ -19,6 +19,23 @@ sys.path.insert(0, str(project_root))
 from src.utils.config import get_config  # noqa: E402
 
 
+def get_table_fqn(table_name: str, dataset: Optional[str] = None) -> str:
+    """
+    Get fully qualified table name for BigQuery.
+
+    Args:
+        table_name: Name of the table (e.g., 'fact_orders', 'dim_customer')
+        dataset: Dataset name. If None, uses warehouse dataset.
+
+    Returns:
+        Fully qualified table name in format: `database.dataset.table`
+    """
+    config = get_config()
+    if dataset is None:
+        dataset = config.bq_dataset_warehouse
+    return f"`{config.bq_database}.{dataset}.{table_name}`"
+
+
 @st.cache_resource
 def get_bigquery_client():
     """
@@ -70,7 +87,7 @@ def get_warehouse_table(table_name: str, limit: Optional[int] = None):
     config = get_config()
     query = f"""
     SELECT *
-    FROM `{config.gcp_project_id}.dev_warehouse_warehouse.{table_name}`
+    FROM `{config.bq_database}.{config.bq_dataset_warehouse}.{table_name}`
     """
     if limit:
         query += f" LIMIT {limit}"
