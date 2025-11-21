@@ -17,13 +17,9 @@ if __name__ == "__main__" or __package__ is None:
 
 from kaggle.api.kaggle_api_extended import KaggleApi
 
-# Handle both relative imports (when used as module) and absolute imports (when run directly)
-try:
-    from ..utils.config import get_config
-    from ..utils.logger import get_logger
-except ImportError:
-    from src.utils.config import get_config
-    from src.utils.logger import get_logger
+# Use absolute imports (sys.path configured above for standalone execution)
+from src.utils.config import get_config
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -247,10 +243,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        from ..utils.logger import setup_logging
-    except ImportError:
-        from src.utils.logger import setup_logging
+    from src.utils.logger import setup_logging
 
     setup_logging("kaggle_downloader")
     main()
