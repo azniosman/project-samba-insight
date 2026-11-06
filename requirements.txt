@@ -58,7 +58,7 @@ pytest-timeout==2.2.0  # Test timeout
 pytest-xdist==3.5.0  # Parallel test execution
 
 # Environment and configuration
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # API interactions
 requests==2.31.0
