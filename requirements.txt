@@ -61,7 +61,7 @@ pytest-xdist==3.5.0  # Parallel test execution
 python-dotenv==1.0.0
 
 # API interactions
-requests==2.31.0
+requests==2.33.0
 safety==3.0.1  # Updated for compatibility with packaging>=22.0
 seaborn==0.13.0
 
