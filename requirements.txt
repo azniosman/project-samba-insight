@@ -9,7 +9,7 @@
 bandit==1.7.6  # Security linting
 
 # Code quality
-black==23.12.1
+black==26.10.1
 coverage[toml]==7.4.0  # Coverage reporting
 db-dtypes==1.1.1  # BigQuery data types for pandas
 dbt-bigquery==1.8.3
